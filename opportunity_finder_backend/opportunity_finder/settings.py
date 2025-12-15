@@ -57,6 +57,12 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Third-party
+    "rest_framework",
+    "rest_framework_simplejwt.token_blacklist",
+    "drf_spectacular",
+    # Local apps
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -87,6 +93,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "opportunity_finder.wsgi.application"
+
+# Custom user model (email-based auth)
+AUTH_USER_MODEL = "accounts.User"
 
 
 # Database
@@ -142,6 +151,26 @@ else:
             "NAME": BASE_DIR / "db.sqlite3",
         }
     }
+
+
+# DRF / Auth
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Opportunity Finder API",
+    "DESCRIPTION": "Backend API for Opportunity Finder (auth, opportunities, matching, notifications).",
+    "VERSION": "0.1.0",
+    # Swagger UI will use Bearer auth automatically when security schemes are present.
+    "SERVE_INCLUDE_SCHEMA": False,
+}
 
 
 # Password validation
