@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     # Local apps
     "accounts",
+    "profiles.apps.ProfilesConfig",
 ]
 
 MIDDLEWARE = [
@@ -170,6 +171,8 @@ SPECTACULAR_SETTINGS = {
     "VERSION": "0.1.0",
     # Swagger UI will use Bearer auth automatically when security schemes are present.
     "SERVE_INCLUDE_SCHEMA": False,
+    # Important for file uploads: request schema differs from response schema (URL string vs binary upload).
+    "COMPONENT_SPLIT_REQUEST": True,
 }
 
 
@@ -208,6 +211,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+
+# Media (uploads) - used for CV file reference storage in `profiles`
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
