@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Domain, JobOpportunity, Location, OpportunityType, Specialization
+from .models import Domain, Location, Opportunity, OpportunityType, RawOpportunity, Source, Specialization
 
 
 @admin.register(OpportunityType)
@@ -29,8 +29,32 @@ class LocationAdmin(admin.ModelAdmin):
     search_fields = ("name",)
 
 
-@admin.register(JobOpportunity)
-class JobOpportunityAdmin(admin.ModelAdmin):
-    list_display = ("title", "op_type", "domain", "specialization", "location", "is_remote", "created_at")
-    list_filter = ("op_type", "domain", "specialization", "is_remote")
-    search_fields = ("title", "description_en", "source_url")
+@admin.register(Opportunity)
+class OpportunityAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "organization",
+        "op_type",
+        "domain",
+        "specialization",
+        "location",
+        "work_mode",
+        "status",
+        "created_at",
+    )
+    list_filter = ("op_type", "domain", "specialization", "work_mode", "status")
+    search_fields = ("title", "organization", "description_en", "source_url")
+
+
+@admin.register(RawOpportunity)
+class RawOpportunityAdmin(admin.ModelAdmin):
+    list_display = ("source", "external_id", "status", "ingested_at")
+    list_filter = ("source__source_type", "status")
+    search_fields = ("source__name", "external_id", "source_url", "raw_text", "text_en")
+
+
+@admin.register(Source)
+class SourceAdmin(admin.ModelAdmin):
+    list_display = ("name", "source_type", "enabled", "poll_interval_minutes", "last_run_at")
+    list_filter = ("source_type", "enabled")
+    search_fields = ("name", "identifier")
