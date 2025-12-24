@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "opportunities.apps.OpportunitiesConfig",
     "configs.apps.ConfigsConfig",
     "ingestion.apps.IngestionConfig",
+    "ai.apps.AiConfig",
 ]
 
 MIDDLEWARE = [
@@ -182,6 +183,26 @@ SPECTACULAR_SETTINGS = {
 PYROGRAM_API_ID = os.getenv("PYROGRAM_API_ID")
 PYROGRAM_API_HASH = os.getenv("PYROGRAM_API_HASH")
 PYROGRAM_SESSION_STRING = os.getenv("PYROGRAM_SESSION_STRING")
+
+# AI (provider router)
+AI_PROVIDER = os.getenv("AI_PROVIDER", "stub").strip().lower()
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
+GEMINI_API_BASE = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com").strip().rstrip("/")
+AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "60"))
+AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.2"))
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+# Hugging Face (Inference API)
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")  # optional for some models, recommended
+HF_MODEL = os.getenv("HF_MODEL", "google/gemma-2b-it").strip()
+# Hugging Face deprecated api-inference host; router is the current endpoint.
+# Base should be the router host. Endpoints vary by mode below.
+HF_API_BASE = os.getenv("HF_API_BASE", "https://router.huggingface.co").strip().rstrip("/")
+HF_MODE = os.getenv("HF_MODE", "openai").strip().lower()  # openai | classic
+HF_MAX_NEW_TOKENS = int(os.getenv("HF_MAX_NEW_TOKENS", "256"))
+HF_WAIT_FOR_MODEL = env_bool("HF_WAIT_FOR_MODEL", default=True)
 
 # Celery (async tasks)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
