@@ -44,3 +44,11 @@ Thumbs.db
 
 # Local notes
 plansofar.txt
+
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+celerybeat-schedule-shm
+celerybeat-schedule-wal
+celerybeat.pid

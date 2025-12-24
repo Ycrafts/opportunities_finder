@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     "profiles.apps.ProfilesConfig",
     "opportunities.apps.OpportunitiesConfig",
     "configs.apps.ConfigsConfig",
+    "ingestion.apps.IngestionConfig",
 ]
 
 MIDDLEWARE = [
@@ -175,6 +176,29 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     # Important for file uploads: request schema differs from response schema (URL string vs binary upload).
     "COMPONENT_SPLIT_REQUEST": True,
+}
+
+# Telegram ingestion (Pyrogram)
+PYROGRAM_API_ID = os.getenv("PYROGRAM_API_ID")
+PYROGRAM_API_HASH = os.getenv("PYROGRAM_API_HASH")
+PYROGRAM_SESSION_STRING = os.getenv("PYROGRAM_SESSION_STRING")
+
+# Celery (async tasks)
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = os.getenv("CELERY_TIMEZONE", "UTC")
+
+# Celery Beat (periodic scheduler)
+# Runs every minute and enqueues per-Source ingestion tasks if due.
+CELERY_BEAT_SCHEDULE = {
+    "ingestion-ingest-due-sources-every-minute": {
+        "task": "ingestion.tasks.ingest_due_sources",
+        "schedule": 60.0,
+        "args": (None, 50),  # source_type=None (all), limit=50
+    }
 }
 
 
