@@ -187,6 +187,8 @@ PYROGRAM_SESSION_STRING = os.getenv("PYROGRAM_SESSION_STRING")
 
 # AI (provider router)
 AI_PROVIDER = os.getenv("AI_PROVIDER", "stub").strip().lower()
+AI_PROVIDER_CHAIN = [p.strip().lower() for p in env_csv("AI_PROVIDER_CHAIN", default=[]) if p.strip()]
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_API_BASE = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com").strip().rstrip("/")
@@ -194,6 +196,11 @@ AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "60"))
 AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.2"))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+
+# Groq (OpenAI-compatible)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant").strip()
+GROQ_API_BASE = os.getenv("GROQ_API_BASE", "https://api.groq.com/openai/v1").strip().rstrip("/")
 
 # Hugging Face (Inference API)
 HF_API_TOKEN = os.getenv("HF_API_TOKEN")  # optional for some models, recommended
@@ -215,12 +222,32 @@ CELERY_TIMEZONE = os.getenv("CELERY_TIMEZONE", "UTC")
 
 # Celery Beat (periodic scheduler)
 # Runs every minute and enqueues per-Source ingestion tasks if due.
+PROCESSING_BEAT_ENABLED = env_bool("PROCESSING_BEAT_ENABLED", default=True)
+PROCESSING_BEAT_INTERVAL_SECONDS = float(os.getenv("PROCESSING_BEAT_INTERVAL_SECONDS", "60"))
+PROCESSING_PENDING_LIMIT = int(os.getenv("PROCESSING_PENDING_LIMIT", "10"))
+# Celery-side throttling for AI calls (helps avoid Gemini/HF rate limits).
+# Format examples: "10/m", "1/s", "100/h"
+PROCESSING_AI_RATE_LIMIT = os.getenv("PROCESSING_AI_RATE_LIMIT", "10/m").strip()
+
 CELERY_BEAT_SCHEDULE = {
     "ingestion-ingest-due-sources-every-minute": {
         "task": "ingestion.tasks.ingest_due_sources",
         "schedule": 60.0,
         "args": (None, 50),  # source_type=None (all), limit=50
+    },
+}
+
+if PROCESSING_BEAT_ENABLED:
+    CELERY_BEAT_SCHEDULE["processing-process-pending-raw"] = {
+        "task": "processing.tasks.process_pending_raw",
+        "schedule": PROCESSING_BEAT_INTERVAL_SECONDS,
+        "args": (PROCESSING_PENDING_LIMIT,),
     }
+
+# Celery task annotations (rate limits, etc.)
+CELERY_TASK_ANNOTATIONS = {
+    # This is the AI-heavy task; rate-limit it to reduce 429s.
+    "processing.tasks.process_raw_opportunity": {"rate_limit": PROCESSING_AI_RATE_LIMIT},
 }
 
 

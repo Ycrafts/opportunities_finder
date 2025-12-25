@@ -84,6 +84,7 @@ class Command(BaseCommand):
             self.stderr.write(self.style.ERROR(f"AI smoke test failed: {e}"))
             self.stderr.write("Check your AI env vars (.env) and internet access for the selected provider.")
             self.stderr.write("- Gemini: GEMINI_API_KEY, GEMINI_MODEL, quota/billing")
+            self.stderr.write("- Groq: GROQ_API_KEY, GROQ_MODEL, GROQ_API_BASE")
             self.stderr.write("- HuggingFace: HF_API_TOKEN (often required), HF_MODEL (may be gated), HF_API_BASE")
             raise SystemExit(1)
 

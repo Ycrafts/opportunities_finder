@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from celery import shared_task
 
+from ai.errors import AITransientError
 from opportunities.models import RawOpportunity
 from processing.services.extractor import RawOpportunityExtractor
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
+@shared_task(bind=True, autoretry_for=(AITransientError,), retry_backoff=True, retry_kwargs={"max_retries": 3})
 def process_raw_opportunity(self, raw_id: int, model: str | None = None) -> dict:
     """
     Celery task: extract one RawOpportunity into Opportunity using AI.
