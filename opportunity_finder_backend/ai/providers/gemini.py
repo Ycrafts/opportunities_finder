@@ -242,4 +242,20 @@ class GeminiAIProvider(BaseAIProvider):
 
         return AIJSONResult(data=data, model=model_name, raw=resp)
 
+    def translate_to_english(self, *, text: str, model: str | None = None) -> AITextResult:
+        """
+        Override the default BaseAIProvider translation prompt.
+
+        Gemini sometimes "helpfully" replies with commentary or the wrong target language unless
+        we constrain it harder.
+        """
+        system = (
+            "You are a translation engine.\n"
+            "Return ONLY the English translation text.\n"
+            "If the input is already English, return it unchanged.\n"
+            "Do NOT add explanations, labels, markdown, or any other language."
+        )
+        prompt = f"TEXT:\n{text}"
+        return self.generate_text(prompt=prompt, system=system, model=model, temperature=0.0)
+
 

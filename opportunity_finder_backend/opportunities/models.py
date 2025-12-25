@@ -62,6 +62,8 @@ class RawOpportunity(models.Model):
     raw_text = models.TextField(blank=True, default="")
     detected_language = models.CharField(max_length=20, blank=True, default="")
     text_en = models.TextField(blank=True, default="")  # translated English text (if needed)
+    # Hash of normalized content used to detect near-duplicates and reuse extractions.
+    content_hash = models.CharField(max_length=64, blank=True, default="", db_index=True)
 
     status = models.CharField(
         max_length=20, choices=ProcessingStatus.choices, default=ProcessingStatus.NEW
@@ -70,6 +72,7 @@ class RawOpportunity(models.Model):
 
     published_at = models.DateTimeField(null=True, blank=True, default=None)
     ingested_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         indexes = [

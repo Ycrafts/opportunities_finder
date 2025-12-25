@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "configs.apps.ConfigsConfig",
     "ingestion.apps.IngestionConfig",
     "ai.apps.AiConfig",
+    "processing.apps.ProcessingConfig",
 ]
 
 MIDDLEWARE = [
