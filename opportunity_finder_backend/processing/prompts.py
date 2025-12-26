@@ -24,10 +24,23 @@ def build_taxonomy_context(*, max_locations: int = 400) -> TaxonomyContext:
     Note: locations can grow large; for v1 we cap what we send to avoid huge prompts.
     """
     op_types = list(OpportunityType.objects.order_by("id").values("id", "name"))
+
+    # Include opportunity_type info in domains for clarity
     domains = list(
-        Domain.objects.order_by("id").values("id", "name", "opportunity_type_id")
+        Domain.objects.select_related('opportunity_type')
+        .order_by("id")
+        .values("id", "name", "opportunity_type_id", "opportunity_type__name")
     )
-    specs = list(Specialization.objects.order_by("id").values("id", "name", "domain_id"))
+
+    # Include domain and opportunity_type info in specializations
+    specs = list(
+        Specialization.objects.select_related('domain__opportunity_type')
+        .order_by("id")
+        .values(
+            "id", "name", "domain_id",
+            "domain__name", "domain__opportunity_type__name"
+        )
+    )
 
     loc_qs = Location.objects.order_by("id").values("id", "name", "parent_id")
     locations = list(loc_qs[: max_locations or 0]) if max_locations else list(loc_qs)
@@ -40,22 +53,55 @@ def build_taxonomy_context(*, max_locations: int = 400) -> TaxonomyContext:
     )
 
 
+def _build_taxonomy_examples() -> str:
+    """Build examples of valid taxonomy combinations."""
+    # Get a few examples of valid combinations
+    examples = []
+    domains_with_types = Domain.objects.select_related('opportunity_type').order_by('?')[:3]
+
+    for domain in domains_with_types:
+        specs = list(Specialization.objects.filter(domain=domain)[:2])
+        if specs:
+            examples.append(
+                f"  • OpType '{domain.opportunity_type.name}' (id:{domain.opportunity_type.id}) "
+                f"→ Domain '{domain.name}' (id:{domain.id}) "
+                f"→ Specializations: {', '.join([f'{s.name}(id:{s.id})' for s in specs])}"
+            )
+
+    if examples:
+        return "EXAMPLES OF VALID COMBINATIONS:\n" + "\n".join(examples) + "\n\n"
+    return ""
+
+
 def build_extract_prompt(*, text_en: str, source_url: str | None = None) -> str:
     """
     Prompt body (without schema). The provider will embed schema separately.
     """
     taxonomy = build_taxonomy_context()
     url_text = source_url or ""
+
+    # Build a clearer taxonomy explanation
+    taxonomy_explanation = (
+        "TAXONOMY SELECTION RULES (CRITICAL - FOLLOW THIS ORDER):\n"
+        "1. FIRST: Choose op_type_id from opportunity_types list\n"
+        "2. SECOND: Choose domain_id ONLY from domains where opportunity_type_id matches your chosen op_type_id\n"
+        "3. THIRD: Choose specialization_id ONLY from specializations where domain_id matches your chosen domain_id\n"
+        "4. FOURTH: Choose location_id from locations list (or null if unknown)\n\n"
+        "VIOLATION WILL CAUSE FAILURE - Always check relationships before selecting IDs!\n"
+    )
+
+    examples = _build_taxonomy_examples()
+
     return (
-        "You are extracting a structured Opportunity from a raw post.\n"
-        "Rules:\n"
-        "- You MUST pick op_type_id, domain_id, specialization_id, location_id from the TAXONOMY IDs.\n"
-        "- The hierarchy must be consistent:\n"
-        "  domain.opportunity_type_id MUST equal op_type_id; specialization.domain_id MUST equal domain_id.\n"
-        "- If location is unknown, set location_id = null.\n"
+        "You are extracting a structured Opportunity from a raw post.\n\n"
+        f"{taxonomy_explanation}"
+        f"{examples}"
+        "EXTRACTION RULES:\n"
+        "- You MUST pick IDs from the TAXONOMY_JSON below. NEVER make up IDs!\n"
         "- Work mode rules:\n"
         "  - If the text clearly says Remote / Work from home, set work_mode=REMOTE.\n"
         "  - If a specific city/country is mentioned (and remote is NOT mentioned), set work_mode=ONSITE.\n"
+        "  - If unclear, set work_mode=UNKNOWN.\n"
         "- If a numeric field is not present, set it to null.\n"
         "- For deadline, output YYYY-MM-DD or null.\n"
         "- If present, extract applicant_gender (FEMALE/MALE/ANY/UNKNOWN), employment_subtype (e.g. PERMANENT),\n"

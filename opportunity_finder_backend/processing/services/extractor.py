@@ -248,6 +248,35 @@ class RawOpportunityExtractor:
         m["extracted"] = extracted
         return m
 
+    def _fix_taxonomy_inconsistencies(self, opp: Opportunity) -> None:
+        """
+        Fix taxonomy inconsistencies by clearing invalid domain/specialization combinations.
+        This is a safety net for when AI doesn't follow taxonomy rules.
+        """
+        from opportunities.models import Domain, Specialization
+
+        # If domain is set but doesn't match opportunity type, clear domain and specialization
+        if opp.domain_id and opp.op_type_id:
+            try:
+                domain = Domain.objects.get(id=opp.domain_id)
+                if domain.opportunity_type_id != opp.op_type_id:
+                    opp.domain_id = None
+                    opp.specialization_id = None
+                    return  # Domain was invalid, cleared both
+            except Domain.DoesNotExist:
+                opp.domain_id = None
+                opp.specialization_id = None
+                return
+
+        # If specialization is set but doesn't match domain, clear specialization
+        if opp.specialization_id and opp.domain_id:
+            try:
+                spec = Specialization.objects.get(id=opp.specialization_id)
+                if spec.domain_id != opp.domain_id:
+                    opp.specialization_id = None
+            except Specialization.DoesNotExist:
+                opp.specialization_id = None
+
     def _apply_post_extraction_rules(
         self,
         *,
@@ -801,6 +830,9 @@ class RawOpportunityExtractor:
                     closed_match=closed_match,
                     location_override=location_override,
                 )
+
+                # Fix any taxonomy inconsistencies before validation
+                self._fix_taxonomy_inconsistencies(opp)
 
                 opp.full_clean()
                 opp.save()
