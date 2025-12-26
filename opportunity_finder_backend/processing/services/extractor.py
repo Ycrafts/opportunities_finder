@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import difflib
 
 from django.db import transaction
 from django.utils import timezone
@@ -396,38 +397,179 @@ class RawOpportunityExtractor:
         self._save_raw_fields(raw, update_fields=["detected_language", "text_en", "status", "updated_at"])
         return raw.text_en
 
+    def _fuzzy_match_name(self, name: str, candidates: list[tuple[int, str]], threshold: float = 0.85) -> tuple[int, float] | None:
+        """
+        Find the best fuzzy match for a name among candidates.
+        
+        Args:
+            name: The name to match (case-insensitive, normalized)
+            candidates: List of (id, name) tuples to search
+            threshold: Minimum similarity ratio (0.0-1.0) to accept a match
+        
+        Returns:
+            (matched_id, similarity_ratio) if match found above threshold, else None
+        """
+        if not name or not candidates:
+            return None
+        
+        name_norm = name.strip().lower()
+        best_match = None
+        best_ratio = 0.0
+        
+        for candidate_id, candidate_name in candidates:
+            candidate_norm = candidate_name.strip().lower()
+            ratio = difflib.SequenceMatcher(None, name_norm, candidate_norm).ratio()
+            
+            # Exact match (after normalization) gets priority
+            if name_norm == candidate_norm:
+                return (candidate_id, 1.0)
+            
+            if ratio > best_ratio:
+                best_ratio = ratio
+                best_match = candidate_id
+        
+        if best_ratio >= threshold:
+            return (best_match, best_ratio)
+        return None
+
+    def _resolve_taxonomy_by_id_or_name(
+        self,
+        *,
+        id_value: int | str | None,
+        name_value: str | None,
+        model_class: type,
+        filter_kwargs: dict | None = None,
+        parent_model: type | None = None,
+        parent_instance: object | None = None,
+        field_name: str,
+    ) -> object:
+        """
+        Resolve a taxonomy item by ID (preferred) or name (with fuzzy matching fallback).
+        
+        Args:
+            id_value: Integer ID or string representation of ID
+            name_value: Name string (used if id_value is None or invalid)
+            model_class: Django model class (e.g., Domain, Specialization, Location)
+            filter_kwargs: Additional filters to apply when querying by name
+            parent_model: Parent model class (for hierarchical validation)
+            parent_instance: Parent instance (for hierarchical validation)
+            field_name: Field name for error messages (e.g., "domain_id", "location")
+        
+        Returns:
+            Model instance
+        
+        Raises:
+            AIPermanentError: If resolution fails
+        """
+        # Try ID first (preferred path)
+        if id_value is not None:
+            if isinstance(id_value, bool):
+                raise AIPermanentError(f"Extraction field {field_name} must be an integer id or name (got bool).")
+            try:
+                instance = model_class.objects.get(id=int(id_value))
+                # Validate parent relationship if provided
+                if parent_model and parent_instance:
+                    parent_field = f"{parent_model.__name__.lower()}_id"
+                    if hasattr(instance, parent_field):
+                        if getattr(instance, parent_field) != parent_instance.id:
+                            raise AIPermanentError(
+                                f"Invalid taxonomy: {field_name} does not belong to parent {parent_model.__name__}."
+                            )
+                return instance
+            except (ValueError, model_class.DoesNotExist):
+                # ID lookup failed; fall through to name matching
+                pass
+        
+        # Try name matching (fuzzy fallback)
+        if name_value:
+            name_str = str(name_value).strip()
+            if name_str:
+                # Build candidate list
+                queryset = model_class.objects.all()
+                if filter_kwargs:
+                    queryset = queryset.filter(**filter_kwargs)
+                if parent_model and parent_instance:
+                    parent_field = f"{parent_model.__name__.lower()}_id"
+                    if hasattr(model_class, parent_field):
+                        queryset = queryset.filter(**{parent_field: parent_instance.id})
+                
+                candidates = list(queryset.values_list("id", "name"))
+                
+                # Try exact match first (case-insensitive)
+                exact_match = queryset.filter(name__iexact=name_str).first()
+                if exact_match:
+                    return exact_match
+                
+                # Try fuzzy match
+                fuzzy_result = self._fuzzy_match_name(name_str, candidates, threshold=0.85)
+                if fuzzy_result:
+                    matched_id, similarity = fuzzy_result
+                    return model_class.objects.get(id=matched_id)
+        
+        # All attempts failed
+        if id_value is not None:
+            raise AIPermanentError(
+                f"Extraction field {field_name} has invalid id {id_value} and no matching name provided."
+            )
+        raise AIPermanentError(
+            f"Extraction missing required field {field_name} (got null id and no name)."
+        )
+
     def _validate_taxonomy_ids(self, data: dict) -> tuple[OpportunityType, Domain, Specialization, Location | None]:
-        def _require_int(key: str) -> int:
-            val = data.get(key)
-            if val is None:
-                raise AIPermanentError(f"Extraction missing required field {key} (got null).")
-            if isinstance(val, bool):
-                # bool is an int subclass; treat as invalid here
-                raise AIPermanentError(f"Extraction field {key} must be an integer id (got bool).")
-            try:
-                return int(val)
-            except Exception as e:
-                raise AIPermanentError(f"Extraction field {key} must be an integer id (got {val!r}).") from e
-
-        op_type = OpportunityType.objects.get(id=_require_int("op_type_id"))
-        domain = Domain.objects.get(id=_require_int("domain_id"))
-        spec = Specialization.objects.get(id=_require_int("specialization_id"))
-
-        if domain.opportunity_type_id != op_type.id:
-            raise ValueError("Invalid taxonomy: domain does not belong to op_type_id.")
-        if spec.domain_id != domain.id:
-            raise ValueError("Invalid taxonomy: specialization does not belong to domain_id.")
-
-        loc_id = data.get("location_id")
+        """
+        Validate and resolve taxonomy IDs/names with fuzzy matching fallback.
+        
+        Accepts either:
+        - ID fields: op_type_id, domain_id, specialization_id, location_id
+        - Name fields: op_type, domain, specialization, location
+        
+        Uses fuzzy matching if name is provided and ID lookup fails.
+        """
+        # Resolve OpportunityType (no parent)
+        op_type = self._resolve_taxonomy_by_id_or_name(
+            id_value=data.get("op_type_id"),
+            name_value=data.get("op_type"),
+            model_class=OpportunityType,
+            field_name="op_type_id",
+        )
+        
+        # Resolve Domain (parent: OpportunityType)
+        domain = self._resolve_taxonomy_by_id_or_name(
+            id_value=data.get("domain_id"),
+            name_value=data.get("domain"),
+            model_class=Domain,
+            parent_model=OpportunityType,
+            parent_instance=op_type,
+            field_name="domain_id",
+        )
+        
+        # Resolve Specialization (parent: Domain)
+        spec = self._resolve_taxonomy_by_id_or_name(
+            id_value=data.get("specialization_id"),
+            name_value=data.get("specialization"),
+            model_class=Specialization,
+            parent_model=Domain,
+            parent_instance=domain,
+            field_name="specialization_id",
+        )
+        
+        # Resolve Location (optional, no strict parent hierarchy)
         location = None
-        if loc_id is not None:
-            # location_id is optional; but if provided it must be an int-like id
-            if isinstance(loc_id, bool):
-                raise AIPermanentError("Extraction field location_id must be an integer id (got bool).")
+        loc_id = data.get("location_id")
+        loc_name = data.get("location")
+        
+        if loc_id is not None or loc_name:
             try:
-                location = Location.objects.get(id=int(loc_id))
-            except Exception as e:
-                raise AIPermanentError(f"Extraction field location_id must be an integer id (got {loc_id!r}).") from e
+                location = self._resolve_taxonomy_by_id_or_name(
+                    id_value=loc_id,
+                    name_value=loc_name,
+                    model_class=Location,
+                    field_name="location_id",
+                )
+            except AIPermanentError:
+                # Location is optional; if resolution fails, just leave it None
+                # (don't fail the entire extraction)
+                location = None
 
         return op_type, domain, spec, location
 
