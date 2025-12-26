@@ -5,7 +5,8 @@ from typing import Any
 from django.db import transaction
 from django.db.models import Q
 
-from ai.router import get_provider_chain_names
+from ai.errors import AIError, AITransientError, AIPermanentError
+from ai.router import get_provider_by_name, get_provider_chain_names
 from configs.models import MatchConfig
 from opportunities.models import Opportunity
 from profiles.models import UserProfile
@@ -230,15 +231,150 @@ class OpportunityMatcher:
         """
         Stage 2: AI-powered re-ranking using semantic matching.
 
-        Uses user's profile snapshot against opportunity details.
+        Uses user's profile snapshot against opportunity details for intelligent scoring.
         """
-        # This is a placeholder for now - we'll implement the AI logic
-        # For now, return a basic match based on Stage 1 success
-        return {
-            "match_score": 8.0,  # Placeholder
-            "justification": "Matches user preferences from Stage 1 filtering",
-            "stage2_score": 8.0,
+        from ai.errors import AIError, AITransientError, AIPermanentError
+        from ai.router import get_provider_chain_names, get_provider_by_name
+
+        # Build the AI prompt
+        prompt = self._build_matching_prompt(opportunity, user_profile)
+
+        # JSON schema for structured AI response
+        schema = {
+            "type": "object",
+            "additionalProperties": False,
+            "required": ["relevance_score", "justification"],
+            "properties": {
+                "relevance_score": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 10.0,
+                    "description": "How relevant this opportunity is to the user (0-10 scale)"
+                },
+                "justification": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "description": "Brief explanation of why this score was given"
+                }
+            }
         }
+
+        # Try AI providers with fallback
+        chain = get_provider_chain_names()
+        last_transient: Exception | None = None
+        first_permanent: Exception | None = None
+
+        for provider_name in chain:
+            try:
+                provider = get_provider_by_name(provider_name)
+                result = provider.generate_json(
+                    prompt=prompt,
+                    json_schema=schema,
+                    temperature=0.3,  # Low temperature for consistent scoring
+                    model=None,  # Use provider default
+                )
+
+                # Validate the response
+                score = result.data.get("relevance_score", 0.0)
+                justification = result.data.get("justification", "")
+
+                # Ensure score is in valid range
+                score = max(0.0, min(10.0, float(score)))
+
+                return {
+                    "match_score": score,
+                    "justification": str(justification)[:500],  # Truncate if too long
+                    "stage2_score": score,
+                    "ai_provider": provider_name,
+                    "ai_model": result.model,
+                }
+
+            except AITransientError as e:
+                last_transient = e
+                continue
+            except (AIPermanentError, Exception) as e:
+                if first_permanent is None:
+                    first_permanent = e
+                continue
+
+        # If all providers failed, fall back to a basic score
+        error_msg = "AI matching failed"
+        if last_transient:
+            error_msg += f": {last_transient}"
+        elif first_permanent:
+            error_msg += f": {first_permanent}"
+
+        return {
+            "match_score": 5.0,  # Neutral fallback score
+            "justification": f"Unable to perform AI matching - {error_msg}",
+            "stage2_score": None,  # Indicate AI failure
+        }
+
+    def _build_matching_prompt(self, opportunity: Opportunity, user_profile: UserProfile) -> str:
+        """Build the AI prompt for matching user profile against opportunity."""
+
+        # Get user profile text
+        user_text = user_profile.matching_profile_text
+        if not user_text:
+            user_text = "No profile information available"
+
+        # Build opportunity description
+        opp_parts = []
+        if opportunity.title:
+            opp_parts.append(f"Title: {opportunity.title}")
+        if opportunity.organization:
+            opp_parts.append(f"Organization: {opportunity.organization}")
+        if opportunity.description_en:
+            opp_parts.append(f"Description: {opportunity.description_en}")
+        if opportunity.work_mode:
+            opp_parts.append(f"Work Mode: {opportunity.work_mode}")
+        if opportunity.employment_type:
+            opp_parts.append(f"Employment Type: {opportunity.employment_type}")
+        if opportunity.experience_level:
+            opp_parts.append(f"Experience Level: {opportunity.experience_level}")
+        if opportunity.min_compensation or opportunity.max_compensation:
+            comp_range = []
+            if opportunity.min_compensation:
+                comp_range.append(f"min: {opportunity.min_compensation}")
+            if opportunity.max_compensation:
+                comp_range.append(f"max: {opportunity.max_compensation}")
+            opp_parts.append(f"Compensation: {', '.join(comp_range)}")
+
+        opportunity_text = "\n".join(opp_parts)
+
+        prompt = f"""
+You are an expert career counselor matching job opportunities to candidates.
+
+USER PROFILE:
+{user_text}
+
+OPPORTUNITY DETAILS:
+{opportunity_text}
+
+TASK:
+Analyze how well this opportunity matches the user's profile, skills, experience, and career interests.
+
+Consider:
+- Skill alignment and relevance
+- Experience level match
+- Career progression potential
+- Interest alignment
+- Work mode preferences
+- Compensation expectations
+
+Provide a relevance score from 0-10 (where 10 is perfect match) and a brief justification.
+
+Score Guidelines:
+- 9-10: Exceptional match, highly relevant skills/experience
+- 7-8: Good match with some relevant experience
+- 5-6: Moderate match, some alignment
+- 3-4: Weak match, limited relevance
+- 0-2: Poor match, not suitable
+
+Return your analysis as JSON with 'relevance_score' and 'justification' fields.
+"""
+
+        return prompt.strip()
 
     @transaction.atomic
     def _create_match_record(
