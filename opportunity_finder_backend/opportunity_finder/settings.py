@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "ingestion.apps.IngestionConfig",
     "ai.apps.AiConfig",
     "processing.apps.ProcessingConfig",
+    "matching.apps.MatchingConfig",
 ]
 
 MIDDLEWARE = [
@@ -227,7 +228,14 @@ PROCESSING_BEAT_INTERVAL_SECONDS = float(os.getenv("PROCESSING_BEAT_INTERVAL_SEC
 PROCESSING_PENDING_LIMIT = int(os.getenv("PROCESSING_PENDING_LIMIT", "10"))
 # Celery-side throttling for AI calls (helps avoid Gemini/HF rate limits).
 # Format examples: "10/m", "1/s", "100/h"
-PROCESSING_AI_RATE_LIMIT = os.getenv("PROCESSING_AI_RATE_LIMIT", "10/m").strip()
+PROCESSING_AI_RATE_LIMIT = os.getenv("PROCESSING_AI_RATE_LIMIT", "3/h").strip()
+
+# Matching (auto-matching for users)
+MATCHING_BEAT_ENABLED = env_bool("MATCHING_BEAT_ENABLED", default=True)
+MATCHING_BEAT_INTERVAL_SECONDS = float(os.getenv("MATCHING_BEAT_INTERVAL_SECONDS", "600"))  # 10 minutes
+MATCHING_BATCH_SIZE = int(os.getenv("MATCHING_BATCH_SIZE", "5"))  # Opportunities per batch
+# Separate rate limit for matching AI calls (cost control)
+MATCHING_AI_RATE_LIMIT = os.getenv("MATCHING_AI_RATE_LIMIT", "1/h").strip()
 
 CELERY_BEAT_SCHEDULE = {
     "ingestion-ingest-due-sources-every-minute": {
@@ -244,10 +252,20 @@ if PROCESSING_BEAT_ENABLED:
         "args": (PROCESSING_PENDING_LIMIT,),
     }
 
+if MATCHING_BEAT_ENABLED:
+    CELERY_BEAT_SCHEDULE["matching-match-pending-opportunities"] = {
+        "task": "matching.tasks.match_pending_opportunities",
+        "schedule": MATCHING_BEAT_INTERVAL_SECONDS,
+        "args": (24, MATCHING_BATCH_SIZE),  # hours_back=24, batch_size
+    }
+
 # Celery task annotations (rate limits, etc.)
 CELERY_TASK_ANNOTATIONS = {
     # This is the AI-heavy task; rate-limit it to reduce 429s.
     "processing.tasks.process_raw_opportunity": {"rate_limit": PROCESSING_AI_RATE_LIMIT},
+    # Matching tasks (separate rate limit for cost control)
+    "matching.tasks.match_opportunity_to_users": {"rate_limit": MATCHING_AI_RATE_LIMIT},
+    "matching.tasks.match_pending_opportunities": {"rate_limit": MATCHING_AI_RATE_LIMIT},
 }
 
 

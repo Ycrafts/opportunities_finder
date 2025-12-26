@@ -14,6 +14,16 @@ def process_raw_opportunity(self, raw_id: int, model: str | None = None) -> dict
     """
     extractor = RawOpportunityExtractor()
     res = extractor.extract_one(raw_id=raw_id, model=model)
+
+    # Trigger matching for the newly extracted opportunity
+    if res.created:
+        from matching.tasks import match_opportunity_to_users
+        # Queue matching with a delay to avoid overwhelming the system
+        match_opportunity_to_users.apply_async(
+            args=[res.opportunity_id],
+            countdown=30,  # 30 second delay
+        )
+
     return {"raw_id": raw_id, "opportunity_id": res.opportunity_id, "created": res.created}
 
 
