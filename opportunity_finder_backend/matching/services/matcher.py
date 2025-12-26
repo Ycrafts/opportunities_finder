@@ -72,13 +72,15 @@ class OpportunityMatcher:
                 if match_result and match_result["match_score"] >= self.min_match_score:
                     # Only create/update record if this is a new match (not reusing existing)
                     if not match_result.get("existing_match"):
-                        self._create_match_record(
+                        match_record = self._create_match_record(
                             user_profile.user,
                             opportunity,
                             match_result["match_score"],
                             match_result["justification"],
                             match_result.get("stage2_score"),
                         )
+                        # Trigger notification creation for new matches
+                        self._trigger_notifications(match_record)
                     matches_created += 1
             except Exception as e:
                 # Log error but continue with other users
@@ -119,6 +121,17 @@ class OpportunityMatcher:
                 "stage2_score": existing_match.stage2_score,
                 "existing_match": True,
             }
+
+    def _trigger_notifications(self, match) -> None:
+        """
+        Trigger notification creation for a new match.
+
+        Uses Celery to create and send notifications asynchronously.
+        """
+        from notifications.tasks import create_notifications_for_match
+
+        # Queue notification creation task
+        create_notifications_for_match.delay(match.id)
 
         # Stage 1: SQL pre-filter based on user preferences
         stage1_candidates = self._stage1_sql_filter(opportunity, config)

@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "ai.apps.AiConfig",
     "processing.apps.ProcessingConfig",
     "matching.apps.MatchingConfig",
+    "notifications.apps.NotificationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -257,6 +258,18 @@ if MATCHING_BEAT_ENABLED:
         "task": "matching.tasks.match_pending_opportunities",
         "schedule": MATCHING_BEAT_INTERVAL_SECONDS,
         "args": (24, MATCHING_BATCH_SIZE),  # hours_back=24, batch_size
+    }
+
+# Notifications (process pending notifications)
+NOTIFICATIONS_BEAT_ENABLED = env_bool("NOTIFICATIONS_BEAT_ENABLED", default=True)
+NOTIFICATIONS_BEAT_INTERVAL_SECONDS = float(os.getenv("NOTIFICATIONS_BEAT_INTERVAL_SECONDS", "300"))  # 5 minutes
+NOTIFICATIONS_PROCESS_LIMIT = int(os.getenv("NOTIFICATIONS_PROCESS_LIMIT", "50"))  # Per batch
+
+if NOTIFICATIONS_BEAT_ENABLED:
+    CELERY_BEAT_SCHEDULE["notifications-process-pending"] = {
+        "task": "notifications.tasks.process_pending_notifications",
+        "schedule": NOTIFICATIONS_BEAT_INTERVAL_SECONDS,
+        "args": (NOTIFICATIONS_PROCESS_LIMIT,),
     }
 
 # Celery task annotations (rate limits, etc.)
