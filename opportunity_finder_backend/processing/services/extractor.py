@@ -611,6 +611,14 @@ class RawOpportunityExtractor:
             with transaction.atomic():
                 raw = RawOpportunity.objects.select_for_update().get(id=raw_id)
 
+                # Skip if already extracted (handles stale queued tasks)
+                if raw.status == RawOpportunity.ProcessingStatus.EXTRACTED:
+                    opp = getattr(raw, "opportunity", None)
+                    if opp:
+                        return ExtractResult(created=False, opportunity_id=opp.id)
+                    # If EXTRACTED but no opportunity, something is wrong - re-process
+                    pass
+
                 text_en = self._ensure_english_text(raw, model=model)
                 if not text_en.strip():
                     raise ValueError("RawOpportunity has no usable text to extract from.")
