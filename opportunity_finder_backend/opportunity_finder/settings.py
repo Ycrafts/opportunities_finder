@@ -73,6 +73,7 @@ INSTALLED_APPS = [
     "matching.apps.MatchingConfig",
     "notifications.apps.NotificationsConfig",
     "resume_extractions.apps.ResumeExtractionsConfig",
+    "cover_letters.apps.CoverLettersConfig",
 ]
 
 MIDDLEWARE = [
