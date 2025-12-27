@@ -40,7 +40,7 @@ class Command(BaseCommand):
             raise CommandError("--limit must be > 0 when --raw-id is not provided.")
 
         qs = RawOpportunity.objects.filter(
-            status__in=[RawOpportunity.ProcessingStatus.NEW, RawOpportunity.ProcessingStatus.TRANSLATED]
+            status__in=[RawOpportunity.ProcessingStatus.NEW, RawOpportunity.ProcessingStatus.TRANSLATED, RawOpportunity.ProcessingStatus.PROCESSING]
         ).order_by("id")
         ids = list(qs.values_list("id", flat=True)[:limit])
         if not ids:

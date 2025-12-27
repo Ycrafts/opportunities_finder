@@ -31,12 +31,26 @@ def process_raw_opportunity(self, raw_id: int, model: str | None = None) -> dict
 def process_pending_raw(self, limit: int = 25) -> dict:
     """
     Convenience task: process NEW/TRANSLATED raws in FIFO-ish order.
-    """
-    qs = RawOpportunity.objects.filter(
-        status__in=[RawOpportunity.ProcessingStatus.NEW, RawOpportunity.ProcessingStatus.TRANSLATED]
-    ).order_by("id")
-    ids = list(qs.values_list("id", flat=True)[: int(limit or 0)])
 
+    Uses atomic transaction and status locking to prevent multiple tasks from
+    processing the same raw opportunities concurrently.
+    """
+    from django.db import transaction
+
+    ids = []
+    with transaction.atomic():
+        # Lock and claim raw opportunities by setting status to PROCESSING
+        raws = RawOpportunity.objects.select_for_update().filter(
+            status__in=[RawOpportunity.ProcessingStatus.NEW, RawOpportunity.ProcessingStatus.TRANSLATED]
+        ).order_by("id")[:int(limit or 0)]
+
+        for raw in raws:
+            # Update status immediately to prevent other tasks from claiming it
+            raw.status = RawOpportunity.ProcessingStatus.PROCESSING
+            raw.save(update_fields=['status'])
+            ids.append(raw.id)
+
+    # Queue processing tasks outside the transaction
     processed = 0
     for rid in ids:
         process_raw_opportunity.delay(rid)

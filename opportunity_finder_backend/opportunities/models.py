@@ -52,6 +52,7 @@ class RawOpportunity(models.Model):
     class ProcessingStatus(models.TextChoices):
         NEW = "NEW", "New"
         TRANSLATED = "TRANSLATED", "Translated"
+        PROCESSING = "PROCESSING", "Processing"
         EXTRACTED = "EXTRACTED", "Extracted"
         FAILED = "FAILED", "Failed"
 
