@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "processing.apps.ProcessingConfig",
     "matching.apps.MatchingConfig",
     "notifications.apps.NotificationsConfig",
+    "resume_extractions.apps.ResumeExtractionsConfig",
 ]
 
 MIDDLEWARE = [
