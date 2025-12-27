@@ -277,6 +277,55 @@ class RawOpportunityExtractor:
             except Specialization.DoesNotExist:
                 opp.specialization_id = None
 
+    def _apply_taxonomy_fallbacks(self, opp: Opportunity, text_en: str) -> None:
+        """
+        Apply fallback logic when AI extraction fails to provide valid taxonomy.
+
+        This is a safety net for common extraction failures.
+        """
+        from opportunities.models import OpportunityType, Domain, Specialization
+
+        text_lower = text_en.lower()
+
+        # If domain/specialization are null but op_type is set, try to infer reasonable defaults
+        if opp.op_type_id and (not opp.domain_id or not opp.specialization_id):
+            op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
+            if op_type:
+                if op_type.name == "SCHOLARSHIP":
+                    # For scholarships, look for degree level keywords
+                    if any(word in text_lower for word in ['masters', 'master', 'msc', 'ma']):
+                        domain = Domain.objects.filter(name="Masters", opportunity_type=op_type).first()
+                    elif any(word in text_lower for word in ['phd', 'ph.d', 'doctorate', 'doctoral']):
+                        domain = Domain.objects.filter(name="PhD", opportunity_type=op_type).first()
+                    elif any(word in text_lower for word in ['bachelors', 'bachelor', 'undergraduate', 'bsc', 'ba']):
+                        domain = Domain.objects.filter(name="Bachelors", opportunity_type=op_type).first()
+                    else:
+                        # Default to Undergraduate for scholarships
+                        domain = Domain.objects.filter(name="Undergraduate", opportunity_type=op_type).first()
+
+                    if domain:
+                        opp.domain = domain
+                        # Pick first specialization for this domain
+                        spec = Specialization.objects.filter(domain=domain).first()
+                        if spec:
+                            opp.specialization = spec
+
+                elif op_type.name == "JOB":
+                    # For jobs, default to Software if no domain specified
+                    domain = Domain.objects.filter(name="Software", opportunity_type=op_type).first()
+                    if domain:
+                        opp.domain = domain
+                        spec = Specialization.objects.filter(domain=domain).first()
+                        if spec:
+                            opp.specialization = spec
+
+        # If employment_type is invalid for the opportunity type, fix it
+        if opp.op_type_id:
+            op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
+            if op_type and op_type.name in ["SCHOLARSHIP", "TRAINING"]:
+                # Scholarships and training don't have employment types
+                opp.employment_type = Opportunity.EmploymentType.UNKNOWN
+
     def _apply_post_extraction_rules(
         self,
         *,
@@ -841,6 +890,9 @@ class RawOpportunityExtractor:
 
                 # Fix any taxonomy inconsistencies before validation
                 self._fix_taxonomy_inconsistencies(opp)
+
+                # Apply fallback logic for common extraction failures
+                self._apply_taxonomy_fallbacks(opp, text_en)
 
                 opp.full_clean()
                 opp.save()

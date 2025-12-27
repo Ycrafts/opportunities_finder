@@ -240,9 +240,9 @@ MATCHING_BATCH_SIZE = int(os.getenv("MATCHING_BATCH_SIZE", "5"))  # Opportunitie
 MATCHING_AI_RATE_LIMIT = os.getenv("MATCHING_AI_RATE_LIMIT", "1/h").strip()
 
 CELERY_BEAT_SCHEDULE = {
-    "ingestion-ingest-due-sources-every-minute": {
+    "ingestion-ingest-due-sources-every-5-minutes": {
         "task": "ingestion.tasks.ingest_due_sources",
-        "schedule": 60.0,
+        "schedule": 300.0,  # Changed from 60.0 to 300.0 (5 minutes)
         "args": (None, 50),  # source_type=None (all), limit=50
     },
 }
