@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     # Local apps
+    "opportunity_finder",
     "accounts.apps.AccountsConfig",
     "profiles.apps.ProfilesConfig",
     "opportunities.apps.OpportunitiesConfig",

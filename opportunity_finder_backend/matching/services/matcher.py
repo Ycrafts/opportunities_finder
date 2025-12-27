@@ -122,17 +122,6 @@ class OpportunityMatcher:
                 "existing_match": True,
             }
 
-    def _trigger_notifications(self, match) -> None:
-        """
-        Trigger notification creation for a new match.
-
-        Uses Celery to create and send notifications asynchronously.
-        """
-        from notifications.tasks import create_notifications_for_match
-
-        # Queue notification creation task
-        create_notifications_for_match.delay(match.id)
-
         # Stage 1: SQL pre-filter based on user preferences
         stage1_candidates = self._stage1_sql_filter(opportunity, config)
 
@@ -149,6 +138,17 @@ class OpportunityMatcher:
                 "match_score": 5.0,  # Neutral score
                 "justification": "Matches basic preferences but too many candidates for detailed analysis"
             }
+
+    def _trigger_notifications(self, match) -> None:
+        """
+        Trigger notification creation for a new match.
+
+        Uses Celery to create and send notifications asynchronously.
+        """
+        from notifications.tasks import create_notifications_for_match
+
+        # Queue notification creation task
+        create_notifications_for_match.delay(match.id)
 
     def _stage1_sql_filter(self, opportunity: Opportunity, config: MatchConfig) -> list[Opportunity]:
         """
