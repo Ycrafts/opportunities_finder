@@ -122,6 +122,7 @@ class RawOpportunityExtractor:
                     json_schema=json_schema,
                     temperature=temperature,
                     model=model,
+                    context="extraction",
                 )
                 return provider, res
             except AITransientError as e:
@@ -162,7 +163,7 @@ class RawOpportunityExtractor:
         for name in chain:
             try:
                 provider = get_provider_by_name(name)
-                ai_res = provider.generate_json(prompt=prompt, json_schema=schema, temperature=0.0, model=model)
+                ai_res = provider.generate_json(prompt=prompt, json_schema=schema, temperature=0.0, model=model, context="extraction")
                 data = ai_res.data or {}
                 # Validate taxonomy consistency and load instances; may raise ValueError/AIPermanentError.
                 op_type, domain, spec, location = self._validate_taxonomy_ids(data)

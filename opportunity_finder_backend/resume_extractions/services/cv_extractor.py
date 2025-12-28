@@ -72,7 +72,9 @@ class CVExtractionService:
                 prompt=prompt,
                 json_schema=schema,
                 model=model,
-                temperature=0.1  # Low temperature for consistent extraction
+                temperature=0.1,  # Low temperature for consistent extraction
+                context="cv_processing",
+                user=session.user,
             )
 
             return result.data or {}

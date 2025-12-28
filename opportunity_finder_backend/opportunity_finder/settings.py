@@ -74,6 +74,7 @@ INSTALLED_APPS = [
     "notifications.apps.NotificationsConfig",
     "resume_extractions.apps.ResumeExtractionsConfig",
     "cover_letters.apps.CoverLettersConfig",
+    "ai_usage.apps.AiUsageConfig",
 ]
 
 MIDDLEWARE = [
@@ -194,7 +195,8 @@ PYROGRAM_SESSION_STRING = os.getenv("PYROGRAM_SESSION_STRING")
 AI_PROVIDER = os.getenv("AI_PROVIDER", "stub").strip().lower()
 AI_PROVIDER_CHAIN = [p.strip().lower() for p in env_csv("AI_PROVIDER_CHAIN", default=[]) if p.strip()]
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Backwards compatibility
+GEMINI_API_KEYS = env_csv("GEMINI_API_KEYS", default=None)  # List of keys for rotation
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_API_BASE = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com").strip().rstrip("/")
 AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "60"))

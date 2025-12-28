@@ -76,6 +76,7 @@ class Command(BaseCommand):
                     json_schema=schema,
                     temperature=0.0,
                     model=options["model"],
+                    context="system",
                 )
                 self.stdout.write(
                     f"[json] model={resj.model} output={json.dumps(resj.data, ensure_ascii=False)}"
@@ -83,7 +84,7 @@ class Command(BaseCommand):
         except AIError as e:
             self.stderr.write(self.style.ERROR(f"AI smoke test failed: {e}"))
             self.stderr.write("Check your AI env vars (.env) and internet access for the selected provider.")
-            self.stderr.write("- Gemini: GEMINI_API_KEY, GEMINI_MODEL, quota/billing")
+            self.stderr.write("- Gemini: GEMINI_API_KEY (single) or GEMINI_API_KEYS (list), GEMINI_MODEL, quota/billing")
             self.stderr.write("- Groq: GROQ_API_KEY, GROQ_MODEL, GROQ_API_BASE")
             self.stderr.write("- HuggingFace: HF_API_TOKEN (often required), HF_MODEL (may be gated), HF_API_BASE")
             raise SystemExit(1)

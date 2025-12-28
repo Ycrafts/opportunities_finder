@@ -285,6 +285,8 @@ class OpportunityMatcher:
                     json_schema=schema,
                     temperature=0.3,  # Low temperature for consistent scoring
                     model=None,  # Use provider default
+                    context="matching",
+                    user=user_profile.user,
                 )
 
                 # Validate the response

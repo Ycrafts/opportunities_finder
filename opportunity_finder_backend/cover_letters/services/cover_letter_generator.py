@@ -38,7 +38,9 @@ class CoverLetterGenerator:
                 prompt=prompt,
                 model=None,  # Use default model
                 temperature=0.7,  # Slightly creative for natural writing
-                system="You are a professional career counselor helping job seekers write compelling cover letters."
+                system="You are a professional career counselor helping job seekers write compelling cover letters.",
+                context="cover_letter",
+                user=user,
             )
 
             return self._clean_generated_content(result.text)

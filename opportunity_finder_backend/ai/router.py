@@ -16,7 +16,6 @@ def _normalize_provider_name(name: str) -> str:
     return (name or "").strip().lower()
 
 
-@lru_cache(maxsize=8)
 def get_provider_by_name(name: str) -> BaseAIProvider:
     """
     Returns an AI provider instance by name.
@@ -38,14 +37,13 @@ def get_provider_by_name(name: str) -> BaseAIProvider:
     if provider in {"huggingface", "hf"}:
         return HuggingFaceAIProvider()
 
-    # Placeholders for now: we’ll implement these providers when you’re ready to add keys + SDKs.
+    # Placeholders for now: we'll implement these providers when you're ready to add keys + SDKs.
     if provider in {"openai", "anthropic"}:
         raise AIConfigurationError(f"AI_PROVIDER={provider} selected but provider implementation is not added yet.")
 
     raise AIConfigurationError(f"Unknown AI_PROVIDER={provider!r}. Expected stub|gemini|openai|anthropic.")
 
 
-@lru_cache(maxsize=1)
 def get_provider() -> BaseAIProvider:
     """
     Returns the configured AI provider instance (AI_PROVIDER).
