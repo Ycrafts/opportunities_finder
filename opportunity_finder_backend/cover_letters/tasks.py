@@ -4,7 +4,7 @@ from .models import CoverLetter
 from .services.cover_letter_generator import CoverLetterGenerator
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3}, priority=9)
 def generate_cover_letter_task(self, user_id: int, opportunity_id: int, version: int = 1, existing_letter_id: int | None = None) -> dict:
     """
     Async task to generate a cover letter using AI.
@@ -31,14 +31,17 @@ def generate_cover_letter_task(self, user_id: int, opportunity_id: int, version:
             existing_letter=existing_letter
         )
 
-        # Create cover letter record
-        cover_letter = CoverLetter.objects.create(
+        # Update the existing GENERATING cover letter record
+        cover_letter = CoverLetter.objects.get(
             user_id=user_id,
             opportunity_id=opportunity_id,
-            generated_content=generated_content,
-            version=version,
-            status=CoverLetter.Status.GENERATED
+            version=version
         )
+
+        # Update with generated content
+        cover_letter.generated_content = generated_content
+        cover_letter.status = CoverLetter.Status.GENERATED
+        cover_letter.save()
 
         return {
             "success": True,
