@@ -120,6 +120,18 @@ class GeminiAIProvider(BaseAIProvider):
         """Mark an API key as exhausted (quota/billing limit reached)."""
         self._exhausted_keys.add(api_key)
 
+    def _get_api_key_identifier(self, api_key: str) -> str:
+        """Get a unique identifier for an API key for tracking purposes."""
+        try:
+            # Find the index of this key in the original list
+            key_index = self.cfg.api_keys.index(api_key)
+            return f"key_{key_index + 1}"
+        except (ValueError, AttributeError):
+            # Fallback: create a simple hash of the key
+            import hashlib
+            key_hash = hashlib.md5(api_key.encode()).hexdigest()[:8]
+            return f"key_{key_hash}"
+
     def _endpoint(self, *, model: str, api_key: str) -> str:
         # v1beta generateContent endpoint
         model_name = model.strip()
@@ -158,7 +170,7 @@ class GeminiAIProvider(BaseAIProvider):
         models = data.get("models") or []
         return models if isinstance(models, list) else []
 
-    def _call(self, *, model: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def _call(self, *, model: str, payload: dict[str, Any]) -> tuple[dict[str, Any], str]:
         body = json.dumps(payload).encode("utf-8")
 
         # Try keys until one works or all are exhausted
@@ -168,6 +180,7 @@ class GeminiAIProvider(BaseAIProvider):
         while True:
             try:
                 api_key = self._get_next_api_key()
+                current_api_key_identifier = self._get_api_key_identifier(api_key)
             except AIPermanentError as e:
                 # All keys exhausted
                 if last_exc:
@@ -201,7 +214,8 @@ class GeminiAIProvider(BaseAIProvider):
                 try:
                     with urlopen(req, timeout=self.cfg.timeout_seconds) as resp:
                         raw = resp.read().decode("utf-8")
-                        return json.loads(raw) if raw else {}
+                        response_data = json.loads(raw) if raw else {}
+                        return response_data, current_api_key_identifier
                 except HTTPError as e:
                     # Read response body for debugging (without leaking key)
                     try:
@@ -290,9 +304,10 @@ class GeminiAIProvider(BaseAIProvider):
             payload["systemInstruction"] = {"parts": [{"text": system}]}
 
         # Track API call
+        current_api_key_identifier = ""
         with AICallTimer() as timer:
             try:
-                resp = self._call(model=model_name, payload=payload)
+                resp, current_api_key_identifier = self._call(model=model_name, payload=payload)
                 result_text = self._extract_text(resp)
 
                 # Log successful call
@@ -305,6 +320,7 @@ class GeminiAIProvider(BaseAIProvider):
                     prompt_length=len(prompt),
                     response_length=len(result_text),
                     success=True,
+                    api_key_identifier=current_api_key_identifier,
                     duration_ms=timer.duration_ms,
                 )
 
@@ -321,6 +337,7 @@ class GeminiAIProvider(BaseAIProvider):
                     prompt_length=len(prompt),
                     success=False,
                     error_message=str(e)[:1000],
+                    api_key_identifier=current_api_key_identifier,
                     duration_ms=timer.duration_ms,
                 )
                 raise
@@ -364,9 +381,10 @@ class GeminiAIProvider(BaseAIProvider):
             payload["systemInstruction"] = {"parts": [{"text": system}]}
 
         # Track API call
+        current_api_key_identifier = ""
         with AICallTimer() as timer:
             try:
-                resp = self._call(model=model_name, payload=payload)
+                resp, current_api_key_identifier = self._call(model=model_name, payload=payload)
                 text = self._extract_text(resp).strip()
 
                 # Parse JSON strictly; attempt minimal cleanup if model returns surrounding text.
@@ -397,6 +415,7 @@ class GeminiAIProvider(BaseAIProvider):
                     prompt_length=len(full_prompt),
                     response_length=len(text),
                     success=True,
+                    api_key_identifier=current_api_key_identifier,
                     duration_ms=timer.duration_ms,
                 )
 
@@ -413,6 +432,7 @@ class GeminiAIProvider(BaseAIProvider):
                     prompt_length=len(full_prompt),
                     success=False,
                     error_message=str(e)[:1000],
+                    api_key_identifier=current_api_key_identifier,
                     duration_ms=timer.duration_ms,
                 )
                 raise

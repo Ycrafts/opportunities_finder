@@ -91,6 +91,12 @@ class AIAPICall(models.Model):
         help_text="Masked API key identifier for tracking"
     )
 
+    api_key_identifier = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Unique identifier for the specific API key used (e.g., key index or hash)"
+    )
+
     duration_ms = models.PositiveIntegerField(
         help_text="API call duration in milliseconds"
     )

@@ -25,6 +25,7 @@ class AIUsageTracker:
         success: bool = True,
         error_message: str = "",
         api_key_masked: str = "",
+        api_key_identifier: str = "",
         duration_ms: int = 0,
     ) -> AIAPICall:
         """
@@ -42,6 +43,7 @@ class AIUsageTracker:
             success: Whether call succeeded
             error_message: Error details if failed
             api_key_masked: Masked API key identifier
+            api_key_identifier: Unique identifier for the specific API key used
             duration_ms: Call duration in milliseconds
 
         Returns:
@@ -59,6 +61,7 @@ class AIUsageTracker:
             success=success,
             error_message=error_message[:1000] if error_message else "",  # Truncate long errors
             api_key_masked=api_key_masked[:50] if api_key_masked else "",
+            api_key_identifier=api_key_identifier[:100] if api_key_identifier else "",
             duration_ms=duration_ms,
         )
 

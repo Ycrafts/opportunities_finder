@@ -237,9 +237,9 @@ PROCESSING_PENDING_LIMIT = int(os.getenv("PROCESSING_PENDING_LIMIT", "10"))
 PROCESSING_AI_RATE_LIMIT = os.getenv("PROCESSING_AI_RATE_LIMIT", "3/h").strip()
 
 # Matching (auto-matching for users)
-MATCHING_BEAT_ENABLED = env_bool("MATCHING_BEAT_ENABLED", default=True)
-MATCHING_BEAT_INTERVAL_SECONDS = float(os.getenv("MATCHING_BEAT_INTERVAL_SECONDS", "600"))  # 10 minutes
-MATCHING_BATCH_SIZE = int(os.getenv("MATCHING_BATCH_SIZE", "5"))  # Opportunities per batch
+MATCHING_BEAT_ENABLED = env_bool("MATCHING_BEAT_ENABLED", default=False)  # DISABLED to isolate burst source
+MATCHING_BEAT_INTERVAL_SECONDS = float(os.getenv("MATCHING_BEAT_INTERVAL_SECONDS", "14400"))  # 4 hours - long intervals to avoid bursts
+MATCHING_BATCH_SIZE = int(os.getenv("MATCHING_BATCH_SIZE", "1"))  # Opportunities per batch (reduced to prevent bursts)
 # Separate rate limit for matching AI calls (cost control)
 MATCHING_AI_RATE_LIMIT = os.getenv("MATCHING_AI_RATE_LIMIT", "1/h").strip()
 
@@ -283,6 +283,7 @@ CELERY_TASK_ANNOTATIONS = {
     "processing.tasks.process_raw_opportunity": {"rate_limit": PROCESSING_AI_RATE_LIMIT},
     # Matching tasks (separate rate limit for cost control)
     "matching.tasks.match_opportunity_to_users": {"rate_limit": MATCHING_AI_RATE_LIMIT},
+    "matching.tasks.match_single_user_opportunity": {"rate_limit": MATCHING_AI_RATE_LIMIT},
     "matching.tasks.match_pending_opportunities": {"rate_limit": MATCHING_AI_RATE_LIMIT},
 }
 
