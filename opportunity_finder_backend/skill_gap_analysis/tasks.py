@@ -9,7 +9,7 @@ from .models import SkillGapAnalysis
 from .services.skill_gap_analyzer import SkillGapAnalyzer
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3}, priority=9)
 def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
     """
     Asynchronous task to perform skill gap analysis.
