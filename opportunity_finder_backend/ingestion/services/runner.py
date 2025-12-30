@@ -36,14 +36,26 @@ class IngestionRunner:
         adapter_cls = self.registry.get_adapter_class(source.source_type)
         adapter = adapter_cls()
 
-        items = adapter.fetch_new(source=source, since=source.last_run_at, limit=limit)
-        result = self.writer.upsert_items(source=source, items=items)
+        try:
+            items = adapter.fetch_new(source=source, since=source.last_run_at, limit=limit)
+            result = self.writer.upsert_items(source=source, items=items)
 
-        # Update last_run_at after a successful run.
-        source.last_run_at = timezone.now()
-        source.save(update_fields=["last_run_at"])
+            # Record successful run metrics
+            source.record_run_result(
+                success=True,
+                items_created=result.created,
+                items_updated=result.updated
+            )
 
-        return result
+            return result
+
+        except Exception as e:
+            # Record failed run metrics
+            error_message = str(e)
+            source.record_run_result(success=False, error_message=error_message)
+
+            # Re-raise the exception
+            raise
 
     def run_all(self, *, source_type: str | None = None, limit: int = 50) -> RunSummary:
         qs = Source.objects.filter(enabled=True)

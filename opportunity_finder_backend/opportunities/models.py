@@ -29,6 +29,16 @@ class Source(models.Model):
     poll_interval_minutes = models.PositiveIntegerField(default=10)
     last_run_at = models.DateTimeField(null=True, blank=True, default=None)
 
+    # Health and performance metrics
+    last_success_at = models.DateTimeField(null=True, blank=True, default=None)
+    last_error_at = models.DateTimeField(null=True, blank=True, default=None)
+    consecutive_failures = models.PositiveIntegerField(default=0)
+    total_runs = models.PositiveIntegerField(default=0)
+    successful_runs = models.PositiveIntegerField(default=0)
+    items_created_total = models.PositiveIntegerField(default=0)
+    items_updated_total = models.PositiveIntegerField(default=0)
+    last_error_message = models.TextField(blank=True, default="")
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -37,6 +47,71 @@ class Source(models.Model):
         indexes = [
             models.Index(fields=["source_type", "enabled"]),
         ]
+
+    @property
+    def success_rate(self) -> float:
+        """Success rate as percentage (0-100)."""
+        if self.total_runs == 0:
+            return 0.0
+        return (self.successful_runs / self.total_runs) * 100
+
+    @property
+    def is_healthy(self) -> bool:
+        """Check if source is healthy based on recent performance."""
+        if not self.enabled:
+            return True  # Disabled sources are "healthy" in the sense they're not failing
+
+        # Consider unhealthy if:
+        # 1. Has recent consecutive failures
+        # 2. Low success rate (<50%) with significant runs
+        if self.consecutive_failures >= 3:
+            return False
+
+        if self.total_runs >= 10 and self.success_rate < 50.0:
+            return False
+
+        return True
+
+    @property
+    def health_status(self) -> str:
+        """Human-readable health status."""
+        if not self.enabled:
+            return "Disabled"
+
+        if self.consecutive_failures >= 3:
+            return f"Unhealthy ({self.consecutive_failures} failures)"
+
+        if self.total_runs >= 10 and self.success_rate < 50.0:
+            return f"Poor ({self.success_rate:.1f}% success)"
+
+        if self.last_error_at and not self.last_success_at:
+            return "Never succeeded"
+
+        return "Healthy"
+
+    def record_run_result(self, success: bool, items_created: int = 0, items_updated: int = 0, error_message: str = ""):
+        """Record the result of a run."""
+        from django.utils import timezone
+
+        self.total_runs += 1
+        self.items_created_total += items_created
+        self.items_updated_total += items_updated
+
+        if success:
+            self.successful_runs += 1
+            self.consecutive_failures = 0
+            self.last_success_at = timezone.now()
+        else:
+            self.consecutive_failures += 1
+            self.last_error_at = timezone.now()
+            if error_message:
+                self.last_error_message = error_message[:500]  # Truncate if too long
+
+        self.save(update_fields=[
+            'total_runs', 'successful_runs', 'consecutive_failures',
+            'items_created_total', 'items_updated_total',
+            'last_success_at', 'last_error_at', 'last_error_message'
+        ])
 
     def __str__(self) -> str:
         return f"{self.source_type}:{self.name}"
