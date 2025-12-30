@@ -75,6 +75,7 @@ INSTALLED_APPS = [
     "resume_extractions.apps.ResumeExtractionsConfig",
     "cover_letters.apps.CoverLettersConfig",
     "ai_usage.apps.AiUsageConfig",
+    "skill_gap_analysis.apps.SkillGapAnalysisConfig",
 ]
 
 MIDDLEWARE = [
