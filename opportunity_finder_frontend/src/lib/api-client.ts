@@ -1,6 +1,28 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Get API URL from environment or detect from current host
+const getApiBaseUrl = (): string => {
+  // Use environment variable if set
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
+  // In browser, detect the current host and use it for backend
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    // If accessing from localhost, use localhost for backend
+    if (host === "localhost" || host === "127.0.0.1") {
+      return "http://localhost:8000";
+    }
+    // Otherwise, use the same host with port 8000
+    return `http://${host}:8000`;
+  }
+  
+  // Server-side fallback
+  return "http://localhost:8000";
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: `${API_BASE_URL}/api`,

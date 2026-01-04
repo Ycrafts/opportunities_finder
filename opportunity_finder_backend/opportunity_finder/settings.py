@@ -45,7 +45,10 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-insecure-secret-key-change-me")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env_bool("DJANGO_DEBUG", default=True)
 
-ALLOWED_HOSTS = env_csv("DJANGO_ALLOWED_HOSTS", default=[])
+ALLOWED_HOSTS = env_csv(
+    "DJANGO_ALLOWED_HOSTS",
+    default=["localhost", "127.0.0.1", "192.168.146.17"]
+)
 
 
 # Application definition
@@ -177,6 +180,8 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
 SPECTACULAR_SETTINGS = {
@@ -339,10 +344,21 @@ MEDIA_ROOT = BASE_DIR / "media"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # CORS settings
+# Allow localhost and common network IPs for development
 CORS_ALLOWED_ORIGINS = env_csv(
     "CORS_ALLOWED_ORIGINS",
-    default=["http://localhost:3000", "http://127.0.0.1:3000"]
+    default=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://192.168.146.17:3000",  # Add your network IP
+    ]
 )
+
+# For development, also allow all origins (less secure, but convenient)
+# Set CORS_ALLOW_ALL_ORIGINS=true in .env to enable for mobile testing
+# Remove this in production!
+if env_bool("CORS_ALLOW_ALL_ORIGINS", default=False):
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Allow credentials (cookies, authorization headers)
 CORS_ALLOW_CREDENTIALS = True

@@ -126,6 +126,34 @@
     -moz-osx-font-smoothing: grayscale;
   }
   
+  /* Smooth theme transition - optimized for performance */
+  html {
+    transition: background-color 0.2s ease-out, color 0.2s ease-out;
+  }
+  
+  /* Only transition essential properties on theme change */
+  body,
+  [class*="bg-"],
+  [class*="text-"],
+  [class*="border-"] {
+    transition: background-color 0.2s ease-out,
+                color 0.2s ease-out,
+                border-color 0.2s ease-out;
+    will-change: background-color, color, border-color;
+  }
+  
+  /* Exclude elements that shouldn't transition */
+  img,
+  video,
+  canvas,
+  svg:not([class*="animate"]),
+  iframe,
+  [class*="animate-"],
+  [data-no-transition] {
+    transition: none !important;
+    will-change: auto;
+  }
+  
   /* Typography refinements for dashboard */
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold tracking-tight;

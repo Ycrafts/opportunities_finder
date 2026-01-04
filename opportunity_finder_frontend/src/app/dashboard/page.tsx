@@ -5,12 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import {
   LayoutDashboard,
   Briefcase,
-  Mail,
-  Calendar,
   FileText,
   Users,
   Bell,
-  BarChart3,
+  Settings,
+  Target,
 } from "lucide-react";
 import { FadeIn } from "@/components/animations/fade-in";
 import { useAuth } from "@/contexts/auth-context";
@@ -20,9 +19,11 @@ import { useRouter } from "next/navigation";
 const navItems = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { title: "Opportunities", href: "/dashboard/opportunities", icon: Briefcase },
-  { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
-  { title: "Cover Letters", href: "/dashboard/cover-letters", icon: FileText },
+  { title: "Matches", href: "/dashboard/matches", icon: Target },
   { title: "Profile", href: "/dashboard/profile", icon: Users },
+  { title: "Cover Letters", href: "/dashboard/cover-letters", icon: FileText },
+  { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
+  { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export default function DashboardPage() {

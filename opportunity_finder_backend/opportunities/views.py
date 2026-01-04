@@ -46,6 +46,14 @@ class OpportunityListView(generics.ListAPIView):
         if is_remote in {"true", "false", "1", "0"}:
             qs = qs.filter(is_remote=is_remote in {"true", "1"})
 
+        work_mode = self.request.query_params.get("work_mode")
+        if work_mode:
+            qs = qs.filter(work_mode=work_mode)
+
+        experience_level = self.request.query_params.get("experience_level")
+        if experience_level:
+            qs = qs.filter(experience_level=experience_level)
+
         status_ = self.request.query_params.get("status")
         if status_:
             qs = qs.filter(status=status_)

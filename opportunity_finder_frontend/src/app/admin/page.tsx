@@ -9,6 +9,7 @@ import {
   Settings,
   BarChart3,
   Shield,
+  Database,
 } from "lucide-react";
 import { FadeIn } from "@/components/animations/fade-in";
 import { useAuth } from "@/contexts/auth-context";
@@ -19,6 +20,7 @@ const adminNavItems = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Opportunities", href: "/admin/opportunities", icon: Briefcase },
+  { title: "Sources", href: "/admin/sources", icon: Database },
   { title: "Analytics", href: "/admin/analytics", icon: BarChart3 },
   { title: "Settings", href: "/admin/settings", icon: Settings },
 ];
