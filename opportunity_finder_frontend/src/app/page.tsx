@@ -17,30 +17,38 @@ import { StaggerContainer, StaggerItem } from "@/components/animations/stagger-c
 import { HoverLift } from "@/components/animations/hover-lift";
 import { GradientBackground } from "@/components/animations/gradient-bg";
 import { AuthSection } from "@/components/auth/auth-section";
+import { CursorTrail } from "@/components/animations/cursor-trail";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { LayoutDashboard } from "lucide-react";
 
 export default function Home() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash === "#get-started") {
-      setAuthMode("signup");
-      // Smooth scroll to auth section
-      setTimeout(() => {
-        document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
-    } else if (hash === "#login") {
-      setAuthMode("login");
-      setTimeout(() => {
-        document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
-      }, 100);
+    // Only handle hash navigation if user is not authenticated
+    if (!isAuthenticated && !isLoading) {
+      const hash = window.location.hash;
+      if (hash === "#get-started") {
+        setAuthMode("signup");
+        // Smooth scroll to auth section
+        setTimeout(() => {
+          document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      } else if (hash === "#login") {
+        setAuthMode("login");
+        setTimeout(() => {
+          document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
+        }, 100);
+      }
     }
-  }, []);
+  }, [isAuthenticated, isLoading]);
 
   return (
     <div className="flex min-h-screen flex-col">
+      <CursorTrail />
       <Header />
       <main className="flex-1 relative">
         {/* Hero Section */}
@@ -71,40 +79,57 @@ export default function Home() {
           </FadeIn>
           <FadeIn delay={0.6}>
             <div className="flex flex-col gap-4 sm:flex-row relative z-10">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Button
-                  size="lg"
-                  className="text-base"
-                  onClick={() => {
-                    setAuthMode("signup");
-                    document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
-                  }}
+              {isAuthenticated ? (
+                <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  Get Started
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Button size="lg" variant="outline" className="text-base group" asChild>
-                  <Link href="#learn-more">
-                    Learn More
-                    <motion.span
-                      className="inline-block ml-2"
-                      whileHover={{ x: 4 }}
-                      transition={{ duration: 0.2 }}
+                  <Button size="lg" className="text-base gap-2" asChild>
+                    <Link href="/dashboard">
+                      <LayoutDashboard className="h-4 w-4" />
+                      Go to Dashboard
+                    </Link>
+                  </Button>
+                </motion.div>
+              ) : (
+                <>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Button
+                      size="lg"
+                      className="text-base"
+                      onClick={() => {
+                        setAuthMode("signup");
+                        document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
+                      }}
                     >
-                      <ArrowRight className="h-4 w-4" />
-                    </motion.span>
-                  </Link>
-                </Button>
-              </motion.div>
+                      Get Started
+                    </Button>
+                  </motion.div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Button size="lg" variant="outline" className="text-base group" asChild>
+                      <Link href="#learn-more">
+                        Learn More
+                        <motion.span
+                          className="inline-block ml-2"
+                          whileHover={{ x: 4 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <ArrowRight className="h-4 w-4" />
+                        </motion.span>
+                      </Link>
+                    </Button>
+                  </motion.div>
+                </>
+              )}
             </div>
           </FadeIn>
         </section>
@@ -189,23 +214,25 @@ export default function Home() {
         </section>
 
         {/* Auth Section */}
-        <section id="get-started" className="border-t bg-muted/30 py-24">
-          <div className="container px-4">
-            <FadeIn>
-              <div className="mb-12 text-center">
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                  Get Started Today
-                </h2>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  Join thousands of professionals who have found their perfect match.
-                </p>
-              </div>
-            </FadeIn>
-            <FadeIn delay={0.2}>
-              <AuthSection defaultMode={authMode} />
-            </FadeIn>
-          </div>
-        </section>
+        {!isAuthenticated && (
+          <section id="get-started" className="border-t bg-muted/30 py-24">
+            <div className="container px-4">
+              <FadeIn>
+                <div className="mb-12 text-center">
+                  <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Get Started Today
+                  </h2>
+                  <p className="mt-4 text-lg text-muted-foreground">
+                    Join thousands of professionals who have found their perfect match.
+                  </p>
+                </div>
+              </FadeIn>
+              <FadeIn delay={0.2}>
+                <AuthSection defaultMode={authMode} />
+              </FadeIn>
+            </div>
+          </section>
+        )}
       </main>
 
       {/* Footer */}

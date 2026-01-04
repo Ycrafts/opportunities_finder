@@ -26,6 +26,7 @@ export interface User {
   id: number;
   email: string;
   is_active: boolean;
+  role: string;
 }
 
 export interface ApiError {
@@ -33,6 +34,7 @@ export interface ApiError {
   email?: string[];
   password?: string[];
   password2?: string[];
+  non_field_errors?: string[];
   [key: string]: any;
 }
 
@@ -66,7 +68,24 @@ export const authApi = {
   extractError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ApiError>;
-      return axiosError.response?.data || { detail: error.message };
+      const errorData = axiosError.response?.data;
+      
+      // If we have error data, return it
+      if (errorData) {
+        return errorData;
+      }
+      
+      // If no response but we have a message, use it
+      if (error.message) {
+        return { detail: error.message };
+      }
+      
+      // Network error or other axios errors
+      if (error.code === "ERR_NETWORK") {
+        return { detail: "Network error. Please check your connection." };
+      }
+      
+      return { detail: "An unexpected error occurred" };
     }
     return { detail: "An unexpected error occurred" };
   },

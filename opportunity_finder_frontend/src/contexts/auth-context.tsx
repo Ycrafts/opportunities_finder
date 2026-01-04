@@ -1,8 +1,19 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { useRouter } from "next/navigation";
-import { authApi, type User, type LoginRequest, type RegisterRequest } from "@/lib/api/auth";
+import {
+  authApi,
+  type User,
+  type LoginRequest,
+  type RegisterRequest,
+} from "@/lib/api/auth";
 
 interface AuthContextType {
   user: User | null;
@@ -11,7 +22,7 @@ interface AuthContextType {
   login: (data: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,22 +32,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
-  const refreshUser = async () => {
+  const refreshUser = async (): Promise<User | null> => {
     try {
       const accessToken = localStorage.getItem("access_token");
       if (!accessToken) {
         setUser(null);
         setIsLoading(false);
-        return;
+        return null;
       }
 
       const userData = await authApi.getMe();
       setUser(userData);
+      return userData;
     } catch (error) {
       // Token invalid or expired
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       setUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -46,18 +59,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser();
   }, []);
 
-  const login = async (data: LoginRequest) => {
-    const response = await authApi.login(data);
-    localStorage.setItem("access_token", response.access);
-    localStorage.setItem("refresh_token", response.refresh);
-    await refreshUser();
-    router.push("/dashboard"); // TODO: Update to actual dashboard route
+  const login = async (data: LoginRequest): Promise<void> => {
+    try {
+      const response = await authApi.login(data);
+      localStorage.setItem("access_token", response.access);
+      localStorage.setItem("refresh_token", response.refresh);
+      const userData = await refreshUser();
+      // Redirect based on user role
+      if (userData?.role === "ADMIN") {
+        router.push("/admin");
+      } else {
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      // Re-throw error so it can be caught and handled by the component
+      throw error;
+    }
   };
 
-  const register = async (data: RegisterRequest) => {
-    await authApi.register(data);
-    // After registration, automatically log in
-    await login({ email: data.email, password: data.password });
+  const register = async (data: RegisterRequest): Promise<void> => {
+    try {
+      await authApi.register(data);
+      // After registration, automatically log in
+      await login({ email: data.email, password: data.password });
+    } catch (error) {
+      // Re-throw error so it can be caught and handled by the component
+      throw error;
+    }
   };
 
   const logout = async () => {
@@ -100,4 +128,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -89,8 +89,16 @@ export function AuthSection({ defaultMode = "login" }: AuthSectionProps) {
       toast.success("Welcome back! Redirecting...");
     } catch (error) {
       const apiError = authApi.extractError(error);
-      const errorMessage = apiError.detail || apiError.email?.[0] || apiError.password?.[0] || "Login failed. Please try again.";
+      // Handle different error formats from SimpleJWT
+      const errorMessage = 
+        apiError.detail || 
+        apiError.non_field_errors?.[0] ||
+        apiError.email?.[0] || 
+        apiError.password?.[0] || 
+        "Invalid email or password. Please try again.";
       toast.error(errorMessage);
+      // Clear password field on error
+      loginForm.setValue("password", "");
     } finally {
       setIsSubmitting(false);
     }
@@ -107,13 +115,32 @@ export function AuthSection({ defaultMode = "login" }: AuthSectionProps) {
       toast.success("Account created! Redirecting...");
     } catch (error) {
       const apiError = authApi.extractError(error);
+      // Handle different error formats
       const errorMessage = 
         apiError.detail || 
+        apiError.non_field_errors?.[0] ||
         apiError.email?.[0] || 
         apiError.password?.[0] || 
         apiError.password2?.[0] || 
-        "Registration failed. Please try again.";
+        "Registration failed. Please check your information and try again.";
       toast.error(errorMessage);
+      
+      // Set form errors for better UX
+      if (apiError.email?.[0]) {
+        signupForm.setError("email", { message: apiError.email[0] });
+      }
+      if (apiError.password?.[0]) {
+        signupForm.setError("password", { message: apiError.password[0] });
+      }
+      if (apiError.password2?.[0]) {
+        signupForm.setError("password2", { message: apiError.password2[0] });
+      }
+      
+      // Clear passwords on error
+      if (apiError.password?.[0] || apiError.password2?.[0]) {
+        signupForm.setValue("password", "");
+        signupForm.setValue("password2", "");
+      }
     } finally {
       setIsSubmitting(false);
     }
