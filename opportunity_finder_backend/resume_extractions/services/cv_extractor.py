@@ -60,7 +60,7 @@ class CVExtractionService:
             text += paragraph.text + "\n"
         return text.strip()
 
-    def extract_profile_data(self, extracted_text: str, model: str | None = None) -> dict[str, Any]:
+    def extract_profile_data(self, extracted_text: str, session: CVExtractionSession, model: str | None = None) -> dict[str, Any]:
         """
         Use AI to extract structured profile data from CV text.
         """
@@ -189,7 +189,7 @@ Return the extracted information in the specified JSON format."""
             session.save()
 
             # Extract structured data with AI
-            extracted_data = self.extract_profile_data(extracted_text)
+            extracted_data = self.extract_profile_data(extracted_text, session)
 
             # Update session with results
             session.academic_info = extracted_data.get("academic_info", {})

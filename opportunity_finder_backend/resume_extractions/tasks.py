@@ -4,7 +4,7 @@ from .models import CVExtractionSession
 from .services.cv_extractor import CVExtractionService
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3}, priority=9)
 def process_cv_extraction(self, session_id: int) -> dict:
     """
     Async task to process CV extraction for a session.

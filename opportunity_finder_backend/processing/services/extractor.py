@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import difflib
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
@@ -283,6 +284,7 @@ class RawOpportunityExtractor:
         Apply fallback logic when AI extraction fails to provide valid taxonomy.
 
         This is a safety net for common extraction failures.
+        Ensures domain and specialization are always set before validation.
         """
         from opportunities.models import OpportunityType, Domain, Specialization
 
@@ -319,6 +321,20 @@ class RawOpportunityExtractor:
                         spec = Specialization.objects.filter(domain=domain).first()
                         if spec:
                             opp.specialization = spec
+
+        # CRITICAL: Ensure domain and specialization are always set (required fields)
+        # Use catch-all fallback if still null
+        if opp.op_type_id and (not opp.domain_id or not opp.specialization_id):
+            op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
+            if op_type:
+                # Last resort: get first available domain for this op_type
+                domain = Domain.objects.filter(opportunity_type=op_type).first()
+                if domain:
+                    opp.domain = domain
+                    # Get first specialization for this domain
+                    spec = Specialization.objects.filter(domain=domain).first()
+                    if spec:
+                        opp.specialization = spec
 
         # If employment_type is invalid for the opportunity type, fix it
         if opp.op_type_id:
@@ -895,6 +911,17 @@ class RawOpportunityExtractor:
                 # Apply fallback logic for common extraction failures
                 self._apply_taxonomy_fallbacks(opp, text_en)
 
+                # Final validation check: ensure required fields are set
+                if not opp.domain_id or not opp.specialization_id:
+                    # If still null after all fallbacks, mark as failed
+                    error_msg = f"Unable to determine domain/specialization. op_type_id={opp.op_type_id}, domain_id={opp.domain_id}, specialization_id={opp.specialization_id}"
+                    RawOpportunity.objects.filter(id=raw_id).update(
+                        status=RawOpportunity.ProcessingStatus.FAILED,
+                        error_message=error_msg[:2000],
+                        updated_at=timezone.now(),
+                    )
+                    raise ValueError(error_msg)
+
                 opp.full_clean()
                 opp.save()
 
@@ -904,6 +931,14 @@ class RawOpportunityExtractor:
 
                 return ExtractResult(created=created, opportunity_id=opp.id)
 
+        except (ValueError, ValidationError) as e:
+            # Handle validation errors (including our custom ValueError for missing taxonomy)
+            RawOpportunity.objects.filter(id=raw_id).update(
+                status=RawOpportunity.ProcessingStatus.FAILED,
+                error_message=str(e)[:2000],
+                updated_at=timezone.now(),
+            )
+            raise
         except AITransientError as e:
             # Keep retryable raws in the pending set (NEW/TRANSLATED), but persist the error message.
             RawOpportunity.objects.filter(id=raw_id).update(

@@ -295,6 +295,8 @@ CELERY_TASK_ANNOTATIONS = {
     "matching.tasks.match_pending_opportunities": {"rate_limit": MATCHING_AI_RATE_LIMIT},
     # Cover letter generation (higher priority, user-facing)
     "cover_letters.tasks.generate_cover_letter_task": {"rate_limit": "10/m"},  # 10 per minute, higher than matching
+    # CV extraction (higher priority, user-facing)
+    "resume_extractions.tasks.process_cv_extraction": {"rate_limit": "10/m"},  # 10 per minute, higher than matching
 }
 
 

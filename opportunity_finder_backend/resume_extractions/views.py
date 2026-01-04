@@ -51,7 +51,15 @@ class CVUploadView(generics.CreateAPIView):
         else:
             # Start extraction asynchronously
             from .tasks import process_cv_extraction
-            process_cv_extraction.delay(session.id)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Triggering async CV extraction task for session {session.id}")
+            try:
+                task_result = process_cv_extraction.delay(session.id)
+                logger.info(f"CV extraction task queued with task_id: {task_result.id}")
+            except Exception as e:
+                logger.error(f"Failed to queue CV extraction task: {str(e)}", exc_info=True)
+                raise
 
         # Return session info (with results if sync)
         if sync_processing:
