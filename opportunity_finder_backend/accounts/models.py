@@ -36,6 +36,13 @@ class UserManager(DjangoUserManager):
         return self._create_user(email, password, **extra_fields)
 
 
+class UserRole(models.TextChoices):
+    USER = "USER", "User"
+    MODERATOR = "MODERATOR", "Moderator"
+    ADMIN = "ADMIN", "Admin"
+    SUPPORT = "SUPPORT", "Support"
+
+
 class User(AbstractUser):
     """
     Email-first user model.
@@ -47,6 +54,12 @@ class User(AbstractUser):
     first_name = None  # name fields belong in UserProfile (not auth user)
     last_name = None
     email = models.EmailField(_("email address"), unique=True)
+    role = models.CharField(
+        max_length=20,
+        choices=UserRole.choices,
+        default=UserRole.USER,
+        help_text="User role for access control",
+    )
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: list[str] = []

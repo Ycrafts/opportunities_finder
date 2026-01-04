@@ -2,21 +2,22 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from .models import User, UserRole
 
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
     ordering = ("email",)
-    list_display = ("email", "is_staff", "is_active")
+    list_display = ("email", "role", "is_staff", "is_active")
     search_fields = ("email",)
 
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         (
-            _("Permissions"),
+            _("Role & Permissions"),
             {
                 "fields": (
+                    "role",
                     "is_active",
                     "is_staff",
                     "is_superuser",
@@ -33,7 +34,7 @@ class UserAdmin(DjangoUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "password1", "password2", "is_staff", "is_superuser"),
+                "fields": ("email", "password1", "password2", "role", "is_staff", "is_superuser"),
             },
         ),
     )
