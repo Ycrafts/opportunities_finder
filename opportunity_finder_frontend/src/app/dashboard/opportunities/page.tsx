@@ -25,6 +25,7 @@ import {
   Building2,
   Filter,
   X,
+  Sliders,
 } from "lucide-react";
 import { FadeIn } from "@/components/animations/fade-in";
 import { useAuth } from "@/contexts/auth-context";
@@ -40,6 +41,7 @@ const navItems = [
   { title: "Opportunities", href: "/dashboard/opportunities", icon: Briefcase },
   { title: "Matches", href: "/dashboard/matches", icon: Target },
   { title: "Profile", href: "/dashboard/profile", icon: Users },
+  { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
   { title: "Cover Letters", href: "/dashboard/cover-letters", icon: FileText },
   {
     title: "Notifications",

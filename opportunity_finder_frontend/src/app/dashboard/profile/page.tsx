@@ -28,6 +28,7 @@ import {
   User,
   Upload,
   Loader2,
+  Sliders,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { profileApi, type UserProfile, type UpdateProfileRequest } from "@/lib/api/profile";
@@ -42,6 +43,7 @@ const navItems = [
   { title: "Opportunities", href: "/dashboard/opportunities", icon: Briefcase },
   { title: "Matches", href: "/dashboard/matches", icon: Target },
   { title: "Profile", href: "/dashboard/profile", icon: Users },
+  { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
   { title: "Cover Letters", href: "/dashboard/cover-letters", icon: FileText },
   { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },

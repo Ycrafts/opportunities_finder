@@ -1,8 +1,14 @@
 from django.db.models import Q
 from rest_framework import generics, permissions
 
-from .models import Opportunity
-from .serializers import OpportunitySerializer
+from .models import Domain, Location, Opportunity, OpportunityType, Specialization
+from .serializers import (
+    DomainSerializer,
+    LocationSerializer,
+    OpportunitySerializer,
+    OpportunityTypeSerializer,
+    SpecializationSerializer,
+)
 
 
 class OpportunityListView(generics.ListAPIView):
@@ -73,3 +79,33 @@ class OpportunityDetailView(generics.RetrieveAPIView):
         "location",
         "location__parent",
     )
+
+
+# Taxonomy list views for match preferences
+# These endpoints disable pagination since taxonomy lists are typically small
+class OpportunityTypeListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = OpportunityTypeSerializer
+    queryset = OpportunityType.objects.all().order_by("name")
+    pagination_class = None
+
+
+class DomainListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DomainSerializer
+    queryset = Domain.objects.select_related("opportunity_type").all().order_by("name")
+    pagination_class = None
+
+
+class SpecializationListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = SpecializationSerializer
+    queryset = Specialization.objects.select_related("domain__opportunity_type").all().order_by("name")
+    pagination_class = None
+
+
+class LocationListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = LocationSerializer
+    queryset = Location.objects.select_related("parent").all().order_by("name")
+    pagination_class = None
