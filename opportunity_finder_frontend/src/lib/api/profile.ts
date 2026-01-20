@@ -3,6 +3,11 @@ import apiClient from "../api-client";
 
 // Academic info can be in two formats:
 // 1. Simple: { degree, university, graduation_year }
+
+export interface LanguageEntry {
+  language: string;
+  proficiency?: string;
+}
 // 2. Complex: { degrees: [{ degree, institution, year, gpa }], certifications: [] }
 export interface AcademicInfo {
   // Simple format
@@ -12,7 +17,7 @@ export interface AcademicInfo {
   seeking?: string;
   field?: string;
   institution?: string;
-  
+
   // Complex format
   degrees?: Array<{
     degree: string;
@@ -21,13 +26,13 @@ export interface AcademicInfo {
     gpa?: string;
   }>;
   certifications?: string[];
-  
+
   // Contact info (sometimes stored here)
   contact?: {
     phone?: string;
     address?: string;
   };
-  
+
   [key: string]: any; // Allow additional properties
 }
 
@@ -39,7 +44,7 @@ export interface UserProfile {
   academic_info: AcademicInfo;
   skills: string[];
   interests: string[];
-  languages: string[];
+  languages: Array<string | LanguageEntry>;
   matching_doc_version: string;
   matching_profile_json: Record<string, any>;
   matching_profile_text: string;
@@ -56,7 +61,7 @@ export interface UpdateProfileRequest {
   academic_info?: AcademicInfo;
   skills?: string[];
   interests?: string[];
-  languages?: string[];
+  languages?: Array<string | LanguageEntry>;
 }
 
 export interface ApiError {
@@ -82,14 +87,14 @@ export const profileApi = {
   async updateProfile(data: UpdateProfileRequest): Promise<UserProfile> {
     // Check if we need to send multipart/form-data (if cv_file is present)
     const hasFile = data.cv_file instanceof File;
-    
+
     let formData: FormData | UpdateProfileRequest;
     let config: { headers?: Record<string, string | undefined> } = {};
-    
+
     if (hasFile) {
       // Use FormData for file upload
       formData = new FormData();
-      
+
       if (data.full_name !== undefined) formData.append("full_name", data.full_name);
       if (data.telegram_id !== undefined && data.telegram_id !== null) {
         formData.append("telegram_id", data.telegram_id.toString());
@@ -108,7 +113,7 @@ export const profileApi = {
       if (data.languages !== undefined) {
         formData.append("languages", JSON.stringify(data.languages));
       }
-      
+
       // Headers will be handled by the request interceptor for FormData
     } else {
       // Use JSON for regular updates
@@ -118,7 +123,7 @@ export const profileApi = {
         delete formData.cv_file;
       }
     }
-    
+
     const response = await apiClient.patch<UserProfile>("/profile/me/", formData, config);
     return response.data;
   },
@@ -127,19 +132,19 @@ export const profileApi = {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ApiError>;
       const errorData = axiosError.response?.data;
-      
+
       if (errorData) {
         return errorData;
       }
-      
+
       if (error.message) {
         return { detail: error.message };
       }
-      
+
       if (error.code === "ERR_NETWORK") {
         return { detail: "Network error. Please check your connection." };
       }
-      
+
       return { detail: "An unexpected error occurred" };
     }
     return { detail: "An unexpected error occurred" };

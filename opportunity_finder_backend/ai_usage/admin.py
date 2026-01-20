@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.db.models import Count, Avg, Sum
+from django.db.models import Count, Avg, Sum, Q
 from django.db.models.functions import TruncDate
 from django.utils.html import format_html
 
@@ -83,12 +83,10 @@ class AIAPICallAdmin(admin.ModelAdmin):
 
     def success_icon(self, obj):
         if obj.success:
-            return format_html('<span style="color: green;">✓</span>')
-        return format_html('<span style="color: red;">✗</span>')
-    success_icon.short_description = 'Success'
+            return format_html('<span style="color: {}">{}</span>', 'green', '✓')
+        return format_html('<span style="color: {}">{}</span>', 'red', '✗')
 
-    # Custom changelist view with summary stats
-    change_list_template = 'admin/ai_usage/aiapicall/change_list.html'
+    success_icon.short_description = 'Success'
 
     def changelist_view(self, request, extra_context=None):
         response = super().changelist_view(request, extra_context)
@@ -101,8 +99,8 @@ class AIAPICallAdmin(admin.ModelAdmin):
             date=TruncDate('created_at')
         ).values('date').annotate(
             total_calls=Count('id'),
-            successful_calls=Count('id', filter=models.Q(success=True)),
-            failed_calls=Count('id', filter=models.Q(success=False)),
+            successful_calls=Count('id', filter=Q(success=True)),
+            failed_calls=Count('id', filter=Q(success=False)),
             avg_duration=Avg('duration_ms'),
             total_tokens=Sum('tokens_used'),
         ).order_by('-date')[:7]  # Last 7 days
@@ -110,14 +108,14 @@ class AIAPICallAdmin(admin.ModelAdmin):
         # Provider breakdown
         provider_stats = queryset.values('provider').annotate(
             total_calls=Count('id'),
-            successful_calls=Count('id', filter=models.Q(success=True)),
+            successful_calls=Count('id', filter=Q(success=True)),
             avg_duration=Avg('duration_ms'),
         ).order_by('-total_calls')
 
         # Context breakdown
         context_stats = queryset.values('context').annotate(
             total_calls=Count('id'),
-            successful_calls=Count('id', filter=models.Q(success=True)),
+            successful_calls=Count('id', filter=Q(success=True)),
         ).order_by('-total_calls')
 
         response.context_data['daily_stats'] = daily_stats

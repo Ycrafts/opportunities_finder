@@ -9,7 +9,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     academic_info = serializers.DictField(required=False)
     skills = serializers.ListField(child=serializers.CharField(), required=False)
     interests = serializers.ListField(child=serializers.CharField(), required=False)
-    languages = serializers.ListField(child=serializers.CharField(), required=False)
+    languages = serializers.JSONField(required=False)
 
     class Meta:
         model = UserProfile
@@ -49,7 +49,7 @@ class UserProfileUpdateSerializer(serializers.ModelSerializer):
     academic_info = serializers.DictField(required=False)
     skills = serializers.ListField(child=serializers.CharField(), required=False)
     interests = serializers.ListField(child=serializers.CharField(), required=False)
-    languages = serializers.ListField(child=serializers.CharField(), required=False)
+    languages = serializers.JSONField(required=False)
 
     class Meta:
         model = UserProfile

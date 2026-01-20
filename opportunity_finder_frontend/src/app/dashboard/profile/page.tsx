@@ -31,7 +31,7 @@ import {
   Sliders,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
-import { profileApi, type UserProfile, type UpdateProfileRequest } from "@/lib/api/profile";
+import { profileApi, type UserProfile, type UpdateProfileRequest, type LanguageEntry } from "@/lib/api/profile";
 import { cvExtractionApi, type CVExtractionSession } from "@/lib/api/cv-extraction";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -266,10 +266,103 @@ export default function ProfilePage() {
   );
 }
 
+const parseStringArrayPayload = (value: string): unknown => {
+  try {
+    return JSON.parse(value);
+  } catch {
+    const normalized = value
+      .replace(/'/g, '"')
+      .replace(/\bNone\b/g, "null")
+      .replace(/\bTrue\b/g, "true")
+      .replace(/\bFalse\b/g, "false");
+    try {
+      return JSON.parse(normalized);
+    } catch {
+      return null;
+    }
+  }
+};
+
+const normalizeStringArray = (value: unknown): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => {
+      if (typeof entry === "string") {
+        const parsed = parseStringArrayPayload(entry);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => (typeof item === "string" ? item : JSON.stringify(item)));
+        }
+        return [entry];
+      }
+      return [JSON.stringify(entry)];
+    });
+  }
+  if (typeof value === "string") {
+    const parsed = parseStringArrayPayload(value);
+    if (Array.isArray(parsed)) {
+      return parsed.map((entry) => (typeof entry === "string" ? entry : JSON.stringify(entry)));
+    }
+    return [value];
+  }
+  return [];
+};
+
+
+const normalizeLanguageEntries = (value: unknown): LanguageEntry[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => {
+      if (typeof entry === "string") {
+        const parsed = parseStringArrayPayload(entry);
+        if (Array.isArray(parsed)) {
+          return parsed.map((item) => {
+            if (typeof item === "string") {
+              const nestedParsed = parseStringArrayPayload(item);
+              if (nestedParsed && typeof nestedParsed === "object" && !Array.isArray(nestedParsed)) {
+                return nestedParsed as LanguageEntry;
+              }
+              return { language: item };
+            }
+            return item as LanguageEntry;
+          });
+        }
+        if (parsed && typeof parsed === "object") {
+          return [parsed as LanguageEntry];
+        }
+        return [{ language: entry }];
+      }
+      return [entry as LanguageEntry];
+    });
+  }
+  if (typeof value === "string") {
+    const parsed = parseStringArrayPayload(value);
+    if (Array.isArray(parsed)) {
+      return parsed.map((entry) => {
+        if (typeof entry === "string") {
+          const nestedParsed = parseStringArrayPayload(entry);
+          if (nestedParsed && typeof nestedParsed === "object" && !Array.isArray(nestedParsed)) {
+            return nestedParsed as LanguageEntry;
+          }
+          return { language: entry };
+        }
+        return entry as LanguageEntry;
+      });
+    }
+    if (parsed && typeof parsed === "object") {
+      return [parsed as LanguageEntry];
+    }
+    return [{ language: value }];
+  }
+  return [];
+};
+
 function ProfileView({ profile }: { profile: UserProfile }) {
   const academicInfo = profile.academic_info || {};
   const degrees = academicInfo.degrees || [];
   const simpleDegree = academicInfo.degree || academicInfo.university;
+  const languages = normalizeLanguageEntries(profile.languages);
+  const skills = normalizeStringArray(profile.skills);
+  const interests = normalizeStringArray(profile.interests);
 
   return (
     <div className="space-y-6">
@@ -350,7 +443,7 @@ function ProfileView({ profile }: { profile: UserProfile }) {
       )}
 
       {/* Skills */}
-      {profile.skills && profile.skills.length > 0 && (
+      {skills.length > 0 && (
         <FadeIn delay={0.2}>
           <Card>
             <CardHeader>
@@ -361,7 +454,7 @@ function ProfileView({ profile }: { profile: UserProfile }) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill, idx) => (
+                {skills.map((skill, idx) => (
                   <Badge key={idx} variant="secondary">
                     {skill}
                   </Badge>
@@ -373,7 +466,7 @@ function ProfileView({ profile }: { profile: UserProfile }) {
       )}
 
       {/* Languages */}
-      {profile.languages && profile.languages.length > 0 && (
+      {languages.length > 0 && (
         <FadeIn delay={0.3}>
           <Card>
             <CardHeader>
@@ -384,9 +477,10 @@ function ProfileView({ profile }: { profile: UserProfile }) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {profile.languages.map((lang, idx) => (
+                {languages.map((lang, idx) => (
                   <Badge key={idx} variant="secondary">
-                    {lang}
+                    {lang.language}
+                    {lang.proficiency && ` (${lang.proficiency})`}
                   </Badge>
                 ))}
               </div>
@@ -396,7 +490,7 @@ function ProfileView({ profile }: { profile: UserProfile }) {
       )}
 
       {/* Interests */}
-      {profile.interests && profile.interests.length > 0 && (
+      {interests.length > 0 && (
         <FadeIn delay={0.4}>
           <Card>
             <CardHeader>
@@ -407,7 +501,7 @@ function ProfileView({ profile }: { profile: UserProfile }) {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {profile.interests.map((interest, idx) => (
+                {interests.map((interest, idx) => (
                   <Badge key={idx} variant="secondary">
                     {interest}
                   </Badge>
@@ -485,19 +579,23 @@ function ProfileEditForm({
   onCancel,
   isSaving,
 }: ProfileEditFormProps) {
+  const initialLanguages: LanguageEntry[] = normalizeLanguageEntries(profile.languages);
+  const initialSkills = normalizeStringArray(profile.skills);
+  const initialInterests = normalizeStringArray(profile.interests);
   const [formData, setFormData] = useState<UpdateProfileRequest>({
     full_name: profile.full_name || "",
     telegram_id: profile.telegram_id || null,
     cv_text: profile.cv_text || "",
     academic_info: profile.academic_info || {},
-    skills: profile.skills || [],
-    interests: profile.interests || [],
-    languages: profile.languages || [],
+    skills: initialSkills,
+    interests: initialInterests,
+    languages: initialLanguages,
   });
 
   const [skillInput, setSkillInput] = useState("");
   const [interestInput, setInterestInput] = useState("");
   const [languageInput, setLanguageInput] = useState("");
+  const [proficiencyInput, setProficiencyInput] = useState("");
 
   const academicInfo = formData.academic_info || {};
   // Check for both simple format (degree, university) and complex format (degrees array)
@@ -585,19 +683,30 @@ function ProfileEditForm({
   };
 
   const addLanguage = () => {
-    if (languageInput.trim() && !formData.languages?.includes(languageInput.trim())) {
-      setFormData({
-        ...formData,
-        languages: [...(formData.languages || []), languageInput.trim()],
-      });
-      setLanguageInput("");
+    const language = languageInput.trim();
+    const proficiency = proficiencyInput.trim();
+    if (!language) return;
+    const nextEntry: LanguageEntry = {
+      language,
+      proficiency: proficiency || undefined,
+    };
+    const existing = (formData.languages || []) as LanguageEntry[];
+    if (existing.some((entry) => entry.language.toLowerCase() === language.toLowerCase())) {
+      return;
     }
+    setFormData({
+      ...formData,
+      languages: [...existing, nextEntry],
+    });
+    setLanguageInput("");
+    setProficiencyInput("");
   };
 
   const removeLanguage = (language: string) => {
+    const existing = (formData.languages || []) as LanguageEntry[];
     setFormData({
       ...formData,
-      languages: formData.languages?.filter((l) => l !== language) || [],
+      languages: existing.filter((entry) => entry.language !== language),
     });
   };
 
@@ -757,7 +866,18 @@ function ProfileEditForm({
                     addLanguage();
                   }
                 }}
-                placeholder="Add a language"
+                placeholder="Language"
+              />
+              <Input
+                value={proficiencyInput}
+                onChange={(e) => setProficiencyInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addLanguage();
+                  }
+                }}
+                placeholder="Proficiency (optional)"
               />
               <Button type="button" onClick={addLanguage} variant="outline">
                 Add
@@ -765,12 +885,13 @@ function ProfileEditForm({
             </div>
             {formData.languages && formData.languages.length > 0 && (
               <div className="flex flex-wrap gap-2">
-                {formData.languages.map((lang, idx) => (
+                {(formData.languages as LanguageEntry[]).map((lang, idx) => (
                   <Badge key={idx} variant="secondary" className="gap-1">
-                    {lang}
+                    {lang.language}
+                    {lang.proficiency && ` (${lang.proficiency})`}
                     <button
                       type="button"
-                      onClick={() => removeLanguage(lang)}
+                      onClick={() => removeLanguage(lang.language)}
                       className="ml-1 hover:text-destructive"
                     >
                       <X className="h-3 w-3" />
