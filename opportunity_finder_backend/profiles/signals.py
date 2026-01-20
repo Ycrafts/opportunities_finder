@@ -7,6 +7,8 @@ from .models import UserProfile
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def create_profile_for_user(sender, instance, created, **kwargs):
+    if kwargs.get("raw"):
+        return
     if created:
         UserProfile.objects.create(user=instance)
 
