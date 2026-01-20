@@ -913,8 +913,28 @@ class RawOpportunityExtractor:
 
                 # Final validation check: ensure required fields are set
                 if not opp.domain_id or not opp.specialization_id:
+                    from opportunities.models import Domain, Specialization
+
                     # If still null after all fallbacks, mark as failed
-                    error_msg = f"Unable to determine domain/specialization. op_type_id={opp.op_type_id}, domain_id={opp.domain_id}, specialization_id={opp.specialization_id}"
+                    reason = "unknown"
+                    if opp.op_type_id:
+                        has_domains = Domain.objects.filter(opportunity_type_id=opp.op_type_id).exists()
+                        if not has_domains:
+                            reason = "no_domains_for_op_type"
+                        elif opp.domain_id:
+                            has_specs = Specialization.objects.filter(domain_id=opp.domain_id).exists()
+                            if not has_specs:
+                                reason = "no_specializations_for_domain"
+                            else:
+                                reason = "specialization_unresolved"
+                        else:
+                            reason = "domain_unresolved"
+
+                    error_msg = (
+                        "Unable to determine domain/specialization. "
+                        f"op_type_id={opp.op_type_id}, domain_id={opp.domain_id}, "
+                        f"specialization_id={opp.specialization_id}, reason={reason}"
+                    )
                     RawOpportunity.objects.filter(id=raw_id).update(
                         status=RawOpportunity.ProcessingStatus.FAILED,
                         error_message=error_msg[:2000],
