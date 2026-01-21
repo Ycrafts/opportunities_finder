@@ -33,6 +33,8 @@ import {
   Save,
   Loader2,
   X,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -108,9 +110,36 @@ export default function PreferencesPage() {
 
   // Local state for form
   const [formData, setFormData] = useState<UpdateMatchConfigRequest>({});
+  const [typeSearch, setTypeSearch] = useState("");
+  const [domainSearchByType, setDomainSearchByType] = useState<Record<number, string>>({});
+  const [specSearchByDomain, setSpecSearchByDomain] = useState<Record<number, string>>({});
+  const [expandedTypes, setExpandedTypes] = useState<Record<number, boolean>>({});
+  const [expandedDomains, setExpandedDomains] = useState<Record<number, boolean>>({});
+  const [expandedLocations, setExpandedLocations] = useState<Record<number, boolean>>({});
+  const [thresholdDraft, setThresholdDraft] = useState<number>(7.0);
 
-  // Location hierarchy navigation state
-  const [locationBreadcrumb, setLocationBreadcrumb] = useState<Location[]>([]);
+  const locationById = useMemo(() => {
+    return new Map(locations.map((loc) => [loc.id, loc]));
+  }, [locations]);
+
+  const ethiopiaRoot = useMemo(() => {
+    return locations.find((loc) => loc.name === "Ethiopia" && !loc.parent);
+  }, [locations]);
+
+  const isEthiopiaLocation = (location: Location): boolean => {
+    let current: Location | undefined = location;
+    while (current) {
+      if (current.name === "Ethiopia" && !current.parent) {
+        return true;
+      }
+      current = current.parent ? locationById.get(current.parent.id) : undefined;
+    }
+    return false;
+  };
+
+  const remoteLocation = useMemo(() => {
+    return locations.find((loc) => loc.name === "Remote" && !loc.parent);
+  }, [locations]);
 
   // Initialize form data when config loads
   useEffect(() => {
@@ -146,6 +175,7 @@ export default function PreferencesPage() {
         ),
         preferred_locations: config.preferred_locations.map((l) => l.id),
       });
+      setThresholdDraft(config.threshold_score ?? 7.0);
     }
   }, [config]);
 
@@ -189,54 +219,179 @@ export default function PreferencesPage() {
     });
   };
 
-  // Filter domains and specializations by selected opportunity types
-  const filteredDomains = useMemo(() => {
-    if (!formData.preferred_opportunity_types?.length) return domains;
-    return domains.filter((d) =>
-      formData.preferred_opportunity_types!.includes(d.opportunity_type.id)
-    );
-  }, [domains, formData.preferred_opportunity_types]);
+  const updateDomainSearch = (typeId: number, value: string) => {
+    setDomainSearchByType((prev) => ({ ...prev, [typeId]: value }));
+  };
 
-  const filteredSpecializations = useMemo(() => {
-    if (!formData.preferred_domains?.length) return specializations;
-    return specializations.filter((s) =>
-      formData.preferred_domains!.includes(s.domain.id)
-    );
-  }, [specializations, formData.preferred_domains]);
+  const updateSpecSearch = (domainId: number, value: string) => {
+    setSpecSearchByDomain((prev) => ({ ...prev, [domainId]: value }));
+  };
 
-  // Filter locations based on hierarchy navigation
-  const currentParentId = locationBreadcrumb.length > 0 
-    ? locationBreadcrumb[locationBreadcrumb.length - 1].id 
-    : null;
-
-  const availableLocations = useMemo(() => {
-    return locations.filter((loc) => {
-      if (currentParentId === null) {
-        // Show top-level locations (no parent)
-        return loc.parent === null;
-      } else {
-        // Show children of current parent
-        return loc.parent?.id === currentParentId;
-      }
+  const domainsByType = useMemo(() => {
+    const map = new Map<number, Domain[]>();
+    opportunityTypes.forEach((type) => {
+      map.set(
+        type.id,
+        domains.filter((domain) => domain.opportunity_type.id === type.id)
+      );
     });
-  }, [locations, currentParentId]);
+    return map;
+  }, [opportunityTypes, domains]);
 
-  // Check if a location has children
-  const hasChildren = (locationId: number): boolean => {
-    return locations.some((loc) => loc.parent?.id === locationId);
+  const specsByDomain = useMemo(() => {
+    const map = new Map<number, Specialization[]>();
+    domains.forEach((domain) => {
+      map.set(
+        domain.id,
+        specializations.filter((spec) => spec.domain.id === domain.id)
+      );
+    });
+    return map;
+  }, [domains, specializations]);
+
+  const toggleExpanded = (
+    updater: React.Dispatch<React.SetStateAction<Record<number, boolean>>>,
+    id: number
+  ) => {
+    updater((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Navigate into a location (show its children)
-  const navigateToLocation = (location: Location) => {
-    if (hasChildren(location.id)) {
-      setLocationBreadcrumb((prev) => [...prev, location]);
+  const toggleOpportunityTypeSelection = (typeId: number) => {
+    setFormData((prev) => {
+      const types = new Set(prev.preferred_opportunity_types || []);
+      const domainsSet = new Set(prev.preferred_domains || []);
+      const specsSet = new Set(prev.preferred_specializations || []);
+      const typeDomains = domainsByType.get(typeId) || [];
+      const typeDomainIds = typeDomains.map((domain) => domain.id);
+      const typeSpecIds = typeDomains.flatMap((domain) =>
+        (specsByDomain.get(domain.id) || []).map((spec) => spec.id)
+      );
+
+      if (types.has(typeId)) {
+        types.delete(typeId);
+        typeDomainIds.forEach((id) => domainsSet.delete(id));
+        typeSpecIds.forEach((id) => specsSet.delete(id));
+      } else {
+        types.add(typeId);
+        typeDomainIds.forEach((id) => domainsSet.add(id));
+        typeSpecIds.forEach((id) => specsSet.add(id));
+      }
+
+      return {
+        ...prev,
+        preferred_opportunity_types: Array.from(types),
+        preferred_domains: Array.from(domainsSet),
+        preferred_specializations: Array.from(specsSet),
+      };
+    });
+  };
+
+  const toggleDomainSelection = (domainId: number, typeId: number) => {
+    setFormData((prev) => {
+      const domainsSet = new Set(prev.preferred_domains || []);
+      const specsSet = new Set(prev.preferred_specializations || []);
+      const typesSet = new Set(prev.preferred_opportunity_types || []);
+      const domainSpecs = specsByDomain.get(domainId) || [];
+      const domainSpecIds = domainSpecs.map((spec) => spec.id);
+
+      if (domainsSet.has(domainId)) {
+        domainsSet.delete(domainId);
+        domainSpecIds.forEach((id) => specsSet.delete(id));
+      } else {
+        domainsSet.add(domainId);
+        typesSet.add(typeId);
+        domainSpecIds.forEach((id) => specsSet.add(id));
+      }
+
+      return {
+        ...prev,
+        preferred_opportunity_types: Array.from(typesSet),
+        preferred_domains: Array.from(domainsSet),
+        preferred_specializations: Array.from(specsSet),
+      };
+    });
+  };
+
+  const toggleSpecializationSelection = (
+    specId: number,
+    domainId: number,
+    typeId: number
+  ) => {
+    setFormData((prev) => {
+      const specsSet = new Set(prev.preferred_specializations || []);
+      const domainsSet = new Set(prev.preferred_domains || []);
+      const typesSet = new Set(prev.preferred_opportunity_types || []);
+
+      if (specsSet.has(specId)) {
+        specsSet.delete(specId);
+      } else {
+        specsSet.add(specId);
+        domainsSet.add(domainId);
+        typesSet.add(typeId);
+      }
+
+      return {
+        ...prev,
+        preferred_opportunity_types: Array.from(typesSet),
+        preferred_domains: Array.from(domainsSet),
+        preferred_specializations: Array.from(specsSet),
+      };
+    });
+  };
+
+
+  const getChildLocations = (parentId: number): Location[] => {
+    return locations.filter(
+      (loc) => loc.parent?.id === parentId && isEthiopiaLocation(loc)
+    );
+  };
+
+  const getLocationDescendantIds = (parentId: number): number[] => {
+    const descendants: number[] = [];
+    const stack = getChildLocations(parentId).map((loc) => loc.id);
+    while (stack.length > 0) {
+      const currentId = stack.pop()!;
+      descendants.push(currentId);
+      getChildLocations(currentId).forEach((child) => stack.push(child.id));
     }
+    return descendants;
   };
 
-  // Navigate back up the hierarchy
-  const navigateBack = (index: number) => {
-    setLocationBreadcrumb((prev) => prev.slice(0, index + 1));
+  const getLocationAncestorIds = (locationId: number): number[] => {
+    const ancestors: number[] = [];
+    let current = locations.find((loc) => loc.id === locationId);
+    while (current?.parent) {
+      ancestors.push(current.parent.id);
+      current = locations.find((loc) => loc.id === current?.parent?.id);
+    }
+    return ancestors;
   };
+
+  const toggleLocationSelection = (locationId: number) => {
+    setFormData((prev) => {
+      const selected = new Set(prev.preferred_locations || []);
+      const descendants = getLocationDescendantIds(locationId);
+      const ancestors = getLocationAncestorIds(locationId);
+
+      if (selected.has(locationId)) {
+        selected.delete(locationId);
+        descendants.forEach((id) => selected.delete(id));
+      } else {
+        selected.add(locationId);
+        descendants.forEach((id) => selected.add(id));
+        ancestors.forEach((id) => selected.add(id));
+      }
+
+      return { ...prev, preferred_locations: Array.from(selected) };
+    });
+  };
+
+  const topLevelLocations = useMemo(() => {
+    const ethiopiaChildren = ethiopiaRoot
+      ? getChildLocations(ethiopiaRoot.id)
+      : [];
+    return remoteLocation ? [...ethiopiaChildren, remoteLocation] : ethiopiaChildren;
+  }, [ethiopiaRoot, remoteLocation, locations]);
 
   // Get full path string for a location
   const getLocationPath = (location: Location): string => {
@@ -292,30 +447,39 @@ export default function PreferencesPage() {
             <CardHeader>
               <CardTitle>Matching Threshold</CardTitle>
               <CardDescription>
-                Set the minimum match score (0-10) for opportunities to be shown
+                Set the minimum match score (3-9) for opportunities to be shown
                 to you
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="threshold">Minimum Match Score</Label>
-                <Input
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="threshold">Minimum Match Score</Label>
+                  <span className="text-sm font-medium">
+                    {thresholdDraft.toFixed(1)}/10
+                  </span>
+                </div>
+                <input
                   id="threshold"
-                  type="number"
-                  min="0"
-                  max="10"
+                  type="range"
+                  min="3"
+                  max="9"
                   step="0.1"
-                  value={formData.threshold_score ?? 7.0}
-                  onChange={(e) =>
+                  value={thresholdDraft}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 3;
+                    setThresholdDraft(value);
                     setFormData((prev) => ({
                       ...prev,
-                      threshold_score: parseFloat(e.target.value) || 0,
-                    }))
-                  }
+                      threshold_score: value,
+                    }));
+                  }}
+                  className="w-full accent-black dark:accent-white"
                 />
-                <p className="text-sm text-muted-foreground">
-                  Current: {formData.threshold_score ?? 7.0}/10
-                </p>
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>3</span>
+                  <span>9</span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -417,25 +581,166 @@ export default function PreferencesPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                <Label>Preferred Opportunity Types</Label>
-                <div className="flex flex-wrap gap-2">
-                  {opportunityTypes.map((type) => {
-                    const isSelected =
-                      formData.preferred_opportunity_types?.includes(type.id);
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <Input
+                    value={typeSearch}
+                    onChange={(e) => setTypeSearch(e.target.value)}
+                    placeholder="Search opportunity types"
+                    className="h-9 sm:max-w-xs"
+                  />
+                </div>
+                <div className="space-y-4">
+                  {opportunityTypes
+                    .filter((type) =>
+                      type.name.toLowerCase().includes(typeSearch.toLowerCase())
+                    )
+                    .map((type) => {
+                    const isTypeSelected =
+                      !!formData.preferred_opportunity_types?.includes(type.id);
+                    const domainSearch = domainSearchByType[type.id] || "";
+                    const typeDomains = domains.filter(
+                      (domain) =>
+                        domain.opportunity_type.id === type.id &&
+                        domain.name.toLowerCase().includes(domainSearch.toLowerCase())
+                    );
+
                     return (
-                      <Badge
-                        key={type.id}
-                        variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-muted px-3 py-1"
-                        onClick={() =>
-                          toggleSelection(
-                            type.id,
-                            "preferred_opportunity_types"
-                          )
-                        }
-                      >
-                        {type.name}
-                      </Badge>
+                      <div key={type.id} className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          {typeDomains.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => toggleExpanded(setExpandedTypes, type.id)}
+                              className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                              aria-label={expandedTypes[type.id] ? "Collapse" : "Expand"}
+                            >
+                              {expandedTypes[type.id] ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </button>
+                          ) : (
+                            <span className="h-5 w-5" aria-hidden="true" />
+                          )}
+                          <label className="flex items-center gap-2 text-sm font-medium">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 rounded border-black text-black accent-black"
+                              checked={isTypeSelected}
+                              onChange={() => toggleOpportunityTypeSelection(type.id)}
+                            />
+                            {type.name}
+                          </label>
+                        </div>
+
+                        {expandedTypes[type.id] && (
+                          <div className="ml-6 space-y-3 border-l pl-4">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                              <Input
+                                value={domainSearch}
+                                onChange={(e) => updateDomainSearch(type.id, e.target.value)}
+                                placeholder={`Search ${type.name} domains`}
+                                className="h-9 sm:max-w-xs"
+                              />
+                            </div>
+                            {typeDomains.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">
+                                No domains available for this type.
+                              </p>
+                            ) : (
+                              typeDomains.map((domain) => {
+                                const isDomainSelected =
+                                  !!formData.preferred_domains?.includes(domain.id);
+                                const domainSpecs = specializations.filter(
+                                  (spec) => spec.domain.id === domain.id
+                                );
+
+                                return (
+                                  <div key={domain.id} className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      {domainSpecs.length > 0 ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleExpanded(setExpandedDomains, domain.id)}
+                                          className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                                          aria-label={expandedDomains[domain.id] ? "Collapse" : "Expand"}
+                                        >
+                                          {expandedDomains[domain.id] ? (
+                                            <ChevronDown className="h-4 w-4" />
+                                          ) : (
+                                            <ChevronRight className="h-4 w-4" />
+                                          )}
+                                        </button>
+                                      ) : (
+                                        <span className="h-5 w-5" aria-hidden="true" />
+                                      )}
+                                      <label className="flex items-center gap-2 text-sm">
+                                        <input
+                                          type="checkbox"
+                                          className="h-4 w-4 rounded border-black text-black accent-black"
+                                          checked={isDomainSelected}
+                                          onChange={() =>
+                                            toggleDomainSelection(domain.id, type.id)
+                                          }
+                                        />
+                                        {domain.name}
+                                      </label>
+                                    </div>
+
+                                    {expandedDomains[domain.id] && (
+                                      <div className="ml-6 space-y-2">
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                          <Input
+                                            value={specSearchByDomain[domain.id] || ""}
+                                            onChange={(e) =>
+                                              updateSpecSearch(domain.id, e.target.value)
+                                            }
+                                            placeholder={`Search ${domain.name} specializations`}
+                                            className="h-9 sm:max-w-xs"
+                                          />
+                                        </div>
+                                        {domainSpecs.length === 0 ? (
+                                          <p className="text-sm text-muted-foreground">
+                                            No specializations for this domain.
+                                          </p>
+                                        ) : (
+                                          domainSpecs.map((spec) => {
+                                            const isSpecSelected =
+                                              !!formData.preferred_specializations?.includes(
+                                                spec.id
+                                              );
+                                            return (
+                                              <label
+                                                key={spec.id}
+                                                className="flex items-center gap-2 text-sm"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  className="h-4 w-4 rounded border-black text-black accent-black"
+                                                  checked={isSpecSelected}
+                                                  onChange={() =>
+                                                    toggleSpecializationSelection(
+                                                      spec.id,
+                                                      domain.id,
+                                                      type.id
+                                                    )
+                                                  }
+                                                />
+                                                {spec.name}
+                                              </label>
+                                            );
+                                          })
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        )}
+                      </div>
                     );
                   })}
                 </div>
@@ -471,129 +776,117 @@ export default function PreferencesPage() {
                 </p>
               </div>
 
-              <div className="space-y-3">
-                <Label>Preferred Domains</Label>
-                <div className="flex flex-wrap gap-2">
-                  {filteredDomains.map((domain) => {
-                    const isSelected = formData.preferred_domains?.includes(
-                      domain.id
-                    );
-                    return (
-                      <Badge
-                        key={domain.id}
-                        variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-muted px-3 py-1"
-                        onClick={() =>
-                          toggleSelection(domain.id, "preferred_domains")
-                        }
-                      >
-                        {domain.name}
-                      </Badge>
-                    );
-                  })}
-                </div>
-                {formData.preferred_domains?.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No domains selected. All domains will be shown.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <Label>Preferred Specializations</Label>
-                <div className="flex flex-wrap gap-2">
-                  {filteredSpecializations.map((spec) => {
-                    const isSelected =
-                      formData.preferred_specializations?.includes(spec.id);
-                    return (
-                      <Badge
-                        key={spec.id}
-                        variant={isSelected ? "default" : "outline"}
-                        className="cursor-pointer hover:bg-muted px-3 py-1"
-                        onClick={() =>
-                          toggleSelection(spec.id, "preferred_specializations")
-                        }
-                      >
-                        {spec.name}
-                      </Badge>
-                    );
-                  })}
-                </div>
-                {formData.preferred_specializations?.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    No specializations selected. All specializations will be
-                    shown.
-                  </p>
-                )}
-              </div>
 
               <div className="space-y-3">
                 <Label>Preferred Locations</Label>
                 
-                {/* Breadcrumb navigation */}
-                {locationBreadcrumb.length > 0 && (
-                  <div className="flex items-center gap-2 flex-wrap text-sm">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setLocationBreadcrumb([])}
-                      className="h-7 px-2 text-xs"
-                    >
-                      All Locations
-                    </Button>
-                    {locationBreadcrumb.map((loc, index) => (
-                      <div key={loc.id} className="flex items-center gap-2">
-                        <span className="text-muted-foreground">/</span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigateBack(index)}
-                          className="h-7 px-2 text-xs"
-                        >
-                          {loc.name}
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Current level locations */}
+                {/* Nested locations list */}
                 <div className="space-y-2">
-                  <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto">
-                    {availableLocations.length === 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {topLevelLocations.length === 0 ? (
                       <p className="text-sm text-muted-foreground py-2">
-                        No locations at this level.
+                        No locations available.
                       </p>
                     ) : (
-                      availableLocations.map((location) => {
+                      topLevelLocations.map((location) => {
                         const isSelected = formData.preferred_locations?.includes(
                           location.id
                         );
-                        const hasChildrenLoc = hasChildren(location.id);
+                        const children = getChildLocations(location.id);
                         return (
-                          <div key={location.id} className="flex items-center gap-1">
-                            <Badge
-                              variant={isSelected ? "default" : "outline"}
-                              className="cursor-pointer hover:bg-muted px-3 py-1"
-                              onClick={() =>
-                                toggleSelection(location.id, "preferred_locations")
-                              }
-                            >
-                              {location.name}
-                            </Badge>
-                            {hasChildrenLoc && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigateToLocation(location)}
-                                className="h-6 px-2 text-xs"
-                                title="Browse sub-locations"
-                              >
-                                →
-                              </Button>
+                          <div key={location.id} className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              {children.length > 0 ? (
+                                <button
+                                  type="button"
+                                  onClick={() => toggleExpanded(setExpandedLocations, location.id)}
+                                  className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                                  aria-label={expandedLocations[location.id] ? "Collapse" : "Expand"}
+                                >
+                                  {expandedLocations[location.id] ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                </button>
+                              ) : (
+                                <span className="h-5 w-5" aria-hidden="true" />
+                              )}
+                              <label className="flex items-center gap-2 text-sm">
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 rounded border-black text-black accent-black"
+                                  checked={!!isSelected}
+                                  onChange={() => toggleLocationSelection(location.id)}
+                                />
+                                {location.name}
+                              </label>
+                            </div>
+                            {expandedLocations[location.id] && children.length > 0 && (
+                              <div className="ml-6 space-y-2 border-l pl-4">
+                                {children.map((child) => {
+                                  const childSelected =
+                                    formData.preferred_locations?.includes(child.id);
+                                  const grandchildren = getChildLocations(child.id);
+                                  return (
+                                    <div key={child.id} className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        {grandchildren.length > 0 ? (
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              toggleExpanded(setExpandedLocations, child.id)
+                                            }
+                                            className="h-5 w-5 text-muted-foreground hover:text-foreground"
+                                            aria-label={expandedLocations[child.id] ? "Collapse" : "Expand"}
+                                          >
+                                            {expandedLocations[child.id] ? (
+                                              <ChevronDown className="h-4 w-4" />
+                                            ) : (
+                                              <ChevronRight className="h-4 w-4" />
+                                            )}
+                                          </button>
+                                        ) : (
+                                          <span className="h-5 w-5" aria-hidden="true" />
+                                        )}
+                                        <label className="flex items-center gap-2 text-sm">
+                                          <input
+                                            type="checkbox"
+                                            className="h-4 w-4 rounded border-black text-black accent-black"
+                                            checked={!!childSelected}
+                                            onChange={() => toggleLocationSelection(child.id)}
+                                          />
+                                          {child.name}
+                                        </label>
+                                      </div>
+                                      {expandedLocations[child.id] && grandchildren.length > 0 && (
+                                        <div className="ml-6 space-y-2 border-l pl-4">
+                                          {grandchildren.map((grandchild) => {
+                                            const grandchildSelected =
+                                              formData.preferred_locations?.includes(
+                                                grandchild.id
+                                              );
+                                            return (
+                                              <label
+                                                key={grandchild.id}
+                                                className="flex items-center gap-2 text-sm"
+                                              >
+                                                <input
+                                                  type="checkbox"
+                                                  className="h-4 w-4 rounded border-black text-black accent-black"
+                                                  checked={!!grandchildSelected}
+                                                  onChange={() => toggleLocationSelection(grandchild.id)}
+                                                />
+                                                {grandchild.name}
+                                              </label>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             )}
                           </div>
                         );
@@ -767,7 +1060,7 @@ export default function PreferencesPage() {
                           notify_via_telegram: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-black text-black accent-black"
                     />
                     <Label htmlFor="notify_telegram" className="cursor-pointer">
                       Telegram
@@ -784,7 +1077,7 @@ export default function PreferencesPage() {
                           notify_via_email: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-black text-black accent-black"
                     />
                     <Label htmlFor="notify_email" className="cursor-pointer">
                       Email
@@ -801,7 +1094,7 @@ export default function PreferencesPage() {
                           notify_via_web_push: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-gray-300"
+                      className="h-4 w-4 rounded border-black text-black accent-black"
                     />
                     <Label htmlFor="notify_web_push" className="cursor-pointer">
                       Web Push

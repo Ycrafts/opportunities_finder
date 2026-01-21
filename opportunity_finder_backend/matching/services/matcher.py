@@ -178,7 +178,11 @@ class OpportunityMatcher:
             filters &= Q(specialization_id__in=preferred_specs)
 
         # Location preferences (with hierarchy support)
-        if config.preferred_locations.exists():
+        if (
+            config.preferred_locations.exists()
+            and opportunity.op_type
+            and opportunity.op_type.name != "SCHOLARSHIP"
+        ):
             preferred_location_ids = set()
             for location in config.preferred_locations.all():
                 # Include location and all its descendants (city + sub-cities)
