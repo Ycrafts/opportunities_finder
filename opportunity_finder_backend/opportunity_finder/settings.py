@@ -14,6 +14,8 @@ import os
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
+from kombu import Queue
+
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -234,6 +236,16 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = os.getenv("CELERY_TIMEZONE", "UTC")
+CELERY_TASK_DEFAULT_QUEUE = "default"
+CELERY_TASK_QUEUE_MAX_PRIORITY = 10
+CELERY_TASK_QUEUES = (
+    Queue("default", queue_arguments={"x-max-priority": CELERY_TASK_QUEUE_MAX_PRIORITY}),
+    Queue("priority", queue_arguments={"x-max-priority": CELERY_TASK_QUEUE_MAX_PRIORITY}),
+)
+CELERY_TASK_ROUTES = {
+    "cover_letters.tasks.generate_cover_letter_task": {"queue": "priority"},
+    "resume_extractions.tasks.process_cv_extraction": {"queue": "priority"},
+}
 
 # Celery Beat (periodic scheduler)
 # Runs every minute and enqueues per-Source ingestion tasks if due.

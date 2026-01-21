@@ -34,7 +34,7 @@ services:
     depends_on:
       - db
       - redis
-    command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo"]
+    command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo", "-Q", "priority,default"]
 
   celery-beat:
     build:
