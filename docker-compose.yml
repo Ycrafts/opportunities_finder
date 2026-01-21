@@ -34,7 +34,23 @@ services:
     depends_on:
       - db
       - redis
-    command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo", "-Q", "priority,default"]
+    command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo", "-Q", "default"]
+
+  celery-worker-priority:
+    build:
+      context: ./opportunity_finder_backend
+      dockerfile: Dockerfile
+    env_file:
+      - ./opportunity_finder_backend/.env
+    environment:
+      DATABASE_URL: postgres://opportunity_finder:opportunity_finder@db:5432/opportunity_finder
+      CELERY_BROKER_URL: redis://redis:6379/0
+      DJANGO_DEBUG: "1"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+    depends_on:
+      - db
+      - redis
+    command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo", "-Q", "priority"]
 
   celery-beat:
     build:

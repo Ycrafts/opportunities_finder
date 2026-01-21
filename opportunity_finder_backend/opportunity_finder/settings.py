@@ -246,6 +246,7 @@ CELERY_TASK_ROUTES = {
     "cover_letters.tasks.generate_cover_letter_task": {"queue": "priority"},
     "resume_extractions.tasks.process_cv_extraction": {"queue": "priority"},
 }
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
 # Celery Beat (periodic scheduler)
 # Runs every minute and enqueues per-Source ingestion tasks if due.

@@ -98,6 +98,7 @@ class CoverLetterListSerializer(serializers.ModelSerializer):
         model = CoverLetter
         fields = [
             "id",
+            "opportunity",
             "opportunity_title",
             "opportunity_organization",
             "status",

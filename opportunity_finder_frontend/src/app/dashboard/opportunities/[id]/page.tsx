@@ -114,6 +114,7 @@ export default function OpportunityDetailPage() {
   type CoverLetter = {
     id: number;
     opportunity: number;
+    opportunity_id?: number;
     generated_content: string;
     edited_content: string;
     final_content: string;
@@ -138,8 +139,10 @@ export default function OpportunityDetailPage() {
   } = useQuery({
     queryKey: ["cover-letters"],
     queryFn: async () => {
-      const response = await apiClient.get<CoverLetter[]>("/cover-letters/");
-      return response.data;
+      const response = await apiClient.get<{ results: CoverLetter[] }>(
+        "/cover-letters/"
+      );
+      return response.data.results ?? [];
     },
     enabled: isAuthenticated,
   });
@@ -147,20 +150,38 @@ export default function OpportunityDetailPage() {
   const coverLetter = useMemo(() => {
     if (!coverLetters?.length || !Number.isFinite(opportunityId)) return null;
     const matches = coverLetters.filter(
-      (letter) => letter.opportunity === opportunityId
+      (letter) =>
+        letter.opportunity === opportunityId ||
+        letter.opportunity_id === opportunityId
     );
     if (!matches.length) return null;
     return matches.sort((a, b) => b.version - a.version)[0];
   }, [coverLetters, opportunityId]);
 
+  const {
+    data: coverLetterDetail,
+    isLoading: isLoadingCoverLetterDetail,
+  } = useQuery({
+    queryKey: ["cover-letter", coverLetter?.id],
+    queryFn: async () => {
+      if (!coverLetter) return null;
+      const response = await apiClient.get<CoverLetter>(
+        `/cover-letters/${coverLetter.id}/`
+      );
+      return response.data;
+    },
+    enabled: Boolean(coverLetter?.id),
+    refetchInterval: coverLetter?.status === "GENERATING" ? 4000 : false,
+  });
+
   const [coverLetterDraft, setCoverLetterDraft] = useState("");
   const [hasEditedDraft, setHasEditedDraft] = useState(false);
 
   useEffect(() => {
-    if (!coverLetter) return;
+    if (!coverLetterDetail) return;
     if (hasEditedDraft) return;
-    setCoverLetterDraft(coverLetter.final_content || "");
-  }, [coverLetter, hasEditedDraft]);
+    setCoverLetterDraft(coverLetterDetail.final_content || "");
+  }, [coverLetterDetail, hasEditedDraft]);
 
   const generateCoverLetterMutation = useMutation({
     mutationFn: async () => {
@@ -206,16 +227,6 @@ export default function OpportunityDetailPage() {
     },
   });
 
-  useEffect(() => {
-    if (!coverLetter) return;
-    if (coverLetter.status === "GENERATING") {
-      const interval = setInterval(() => {
-        queryClient.invalidateQueries({ queryKey: ["cover-letters"] });
-      }, 4000);
-      return () => clearInterval(interval);
-    }
-    return undefined;
-  }, [coverLetter, queryClient]);
 
   if (isLoading || isLoadingOpportunity) {
     return (
@@ -373,20 +384,20 @@ export default function OpportunityDetailPage() {
               <div className="border-t pt-4 space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-sm font-semibold">Cover Letter</h3>
-                  {coverLetter?.status && (
+                  {coverLetterDetail?.status && (
                     <Badge variant="outline" className="text-xs">
-                      {coverLetter.status}
+                      {coverLetterDetail.status}
                     </Badge>
                   )}
                 </div>
-                {isLoadingCoverLetters ? (
+                {isLoadingCoverLetters || isLoadingCoverLetterDetail ? (
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading cover letter...
                   </div>
-                ) : coverLetter ? (
+                ) : coverLetterDetail ? (
                   <div className="space-y-3">
-                    {coverLetter.status === "GENERATING" && (
+                    {coverLetterDetail.status === "GENERATING" && (
                       <p className="text-sm text-muted-foreground">
                         Generating your cover letter. It will appear here automatically.
                       </p>
@@ -422,16 +433,17 @@ export default function OpportunityDetailPage() {
                         variant="outline"
                         disabled={updateCoverLetterMutation.isPending}
                         onClick={() => {
-                          setCoverLetterDraft(coverLetter.final_content || "");
+                          setCoverLetterDraft(coverLetterDetail.final_content || "");
                           setHasEditedDraft(false);
                         }}
                       >
                         Reset
                       </Button>
                     </div>
-                    {coverLetter.status === "FAILED" && coverLetter.error_message && (
+                    {coverLetterDetail.status === "FAILED" &&
+                      coverLetterDetail.error_message && (
                       <p className="text-sm text-destructive">
-                        {coverLetter.error_message}
+                        {coverLetterDetail.error_message}
                       </p>
                     )}
                   </div>
