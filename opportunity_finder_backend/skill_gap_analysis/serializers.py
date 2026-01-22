@@ -68,6 +68,7 @@ class SkillGapAnalysisListSerializer(serializers.ModelSerializer):
         model = SkillGapAnalysis
         fields = [
             "id",
+            "opportunity",
             "opportunity_title",
             "opportunity_organization",
             "status",

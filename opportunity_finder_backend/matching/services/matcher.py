@@ -343,6 +343,8 @@ class OpportunityMatcher:
             opp_parts.append(f"Title: {opportunity.title}")
         if opportunity.organization:
             opp_parts.append(f"Organization: {opportunity.organization}")
+        if opportunity.op_type:
+            opp_parts.append(f"Opportunity Type: {opportunity.op_type.name}")
         if opportunity.description_en:
             opp_parts.append(f"Description: {opportunity.description_en}")
         if opportunity.work_mode:
@@ -362,7 +364,7 @@ class OpportunityMatcher:
         opportunity_text = "\n".join(opp_parts)
 
         prompt = f"""
-You are an expert career counselor matching job opportunities to candidates.
+You are an expert career counselor matching opportunities to candidates.
 
 USER PROFILE:
 {user_text}
@@ -375,11 +377,16 @@ Analyze how well this opportunity matches the user's profile, skills, experience
 
 Consider:
 - Skill alignment and relevance
-- Experience level match
+- Experience or education alignment (where relevant)
 - Career progression potential
 - Interest alignment
-- Work mode preferences
-- Compensation expectations
+- Work mode preferences (if applicable)
+- Compensation expectations (if applicable)
+
+Opportunity type guidance:
+- JOB/INTERNSHIP: weigh skills, experience level, work mode, and compensation fit.
+- TRAINING: weigh skills to be developed, prerequisites, and learning goals.
+- SCHOLARSHIP: weigh academic background, field alignment, and eligibility cues.
 
 Provide a relevance score from 0-10 (where 10 is perfect match) and a brief justification.
 

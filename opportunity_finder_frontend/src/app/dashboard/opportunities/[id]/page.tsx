@@ -122,6 +122,40 @@ export default function OpportunityDetailPage() {
     error_message: string;
   };
 
+  type SkillGapAnalysis = {
+    id: number;
+    opportunity: number;
+    opportunity_title?: string;
+    opportunity_organization?: string;
+    status: string;
+    missing_skills: string[];
+    skill_gaps: Record<
+      string,
+      {
+        current_level: string;
+        required_level: string;
+        gap_size: string;
+        priority?: string;
+      }
+    >;
+    recommended_actions: Array<{
+      skill?: string;
+      action_type?: string;
+      description?: string;
+      resource?: string;
+      estimated_time_weeks?: number;
+      cost?: string;
+      priority?: string;
+    }>;
+    alternative_suggestions: Record<string, any>;
+    confidence_score: number | null;
+    estimated_time_months: number | null;
+    error_message: string;
+    created_at: string;
+    updated_at: string;
+    completed_at: string | null;
+  };
+
   const {
     data: opportunity,
     isLoading: isLoadingOpportunity,
@@ -146,6 +180,10 @@ export default function OpportunityDetailPage() {
     enabled: isAuthenticated,
   });
 
+  const [coverLetterDraft, setCoverLetterDraft] = useState("");
+  const [hasEditedDraft, setHasEditedDraft] = useState(false);
+  const [skillGapAnalysisId, setSkillGapAnalysisId] = useState<number | null>(null);
+
   const coverLetter = useMemo(() => {
     if (!coverLetters?.length || !Number.isFinite(opportunityId)) return null;
     const matches = coverLetters.filter(
@@ -156,6 +194,51 @@ export default function OpportunityDetailPage() {
     if (!matches.length) return null;
     return matches.sort((a, b) => b.version - a.version)[0];
   }, [coverLetters, opportunityId]);
+
+  const {
+    data: skillGapAnalyses,
+    isLoading: isLoadingSkillGapAnalyses,
+  } = useQuery({
+    queryKey: ["skill-gap-analyses"],
+    queryFn: async () => {
+      const response = await apiClient.get<{ results: SkillGapAnalysis[] }>(
+        "/skill-gap-analysis/"
+      );
+      return response.data.results ?? [];
+    },
+    enabled: isAuthenticated,
+  });
+
+  const skillGapAnalysis = useMemo(() => {
+    if (!skillGapAnalyses?.length || !Number.isFinite(opportunityId)) return null;
+    const matches = skillGapAnalyses.filter(
+      (analysis) => analysis.opportunity === opportunityId
+    );
+    if (!matches.length) return null;
+    return matches.sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+  }, [skillGapAnalyses, opportunityId]);
+
+  const activeSkillGapAnalysisId =
+    skillGapAnalysisId ?? skillGapAnalysis?.id ?? null;
+
+  const {
+    data: skillGapAnalysisDetail,
+    isLoading: isLoadingSkillGapAnalysisDetail,
+  } = useQuery<SkillGapAnalysis | null>({
+    queryKey: ["skill-gap-analysis", activeSkillGapAnalysisId],
+    queryFn: async () => {
+      if (!activeSkillGapAnalysisId) return null;
+      const response = await apiClient.get<SkillGapAnalysis>(
+        `/skill-gap-analysis/${activeSkillGapAnalysisId}/`
+      );
+      return response.data;
+    },
+    enabled: Boolean(activeSkillGapAnalysisId),
+    refetchInterval: (query) =>
+      query.state.data?.status === "GENERATING" ? 4000 : false,
+  });
 
   const {
     data: coverLetterDetail,
@@ -172,9 +255,6 @@ export default function OpportunityDetailPage() {
     enabled: Boolean(coverLetter?.id),
     refetchInterval: coverLetter?.status === "GENERATING" ? 4000 : false,
   });
-
-  const [coverLetterDraft, setCoverLetterDraft] = useState("");
-  const [hasEditedDraft, setHasEditedDraft] = useState(false);
 
   useEffect(() => {
     if (!coverLetterDetail) return;
@@ -228,6 +308,29 @@ export default function OpportunityDetailPage() {
         error?.response?.data?.error ||
         error?.response?.data?.detail ||
         "Failed to save cover letter.";
+      toast.error(message);
+    },
+  });
+
+  const analyzeSkillGapMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiClient.post("/skill-gap-analysis/analyze/", {
+        opportunity_id: opportunityId,
+      });
+      return response.data;
+    },
+    onSuccess: (data: SkillGapAnalysis) => {
+      if (data?.id) {
+        setSkillGapAnalysisId(data.id);
+      }
+      toast.success("Skill gap analysis started.");
+      queryClient.invalidateQueries({ queryKey: ["skill-gap-analyses"] });
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.detail ||
+        "Failed to start skill gap analysis.";
       toast.error(message);
     },
   });
@@ -316,6 +419,19 @@ export default function OpportunityDetailPage() {
                       Generate Cover Letter
                     </Button>
                   )}
+                  <Button
+                    variant="outline"
+                    className="gap-2 w-full"
+                    disabled={analyzeSkillGapMutation.isPending}
+                    onClick={() => analyzeSkillGapMutation.mutate()}
+                  >
+                    {analyzeSkillGapMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Target className="h-4 w-4" />
+                    )}
+                    Skill Gap Analysis
+                  </Button>
                   {opportunity.source_url && (
                     <Button asChild variant="outline" className="gap-2 w-full">
                       <a
@@ -384,6 +500,115 @@ export default function OpportunityDetailPage() {
                   {opportunity.description_en || "No description provided."}
                 </p>
               </div>
+              {opportunity.op_type.name === "JOB" && (
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">Skill Gap Analysis</h3>
+                    {skillGapAnalysisDetail?.status && (
+                      <Badge variant="outline" className="text-xs">
+                        {skillGapAnalysisDetail.status}
+                      </Badge>
+                    )}
+                  </div>
+                  {isLoadingSkillGapAnalyses ||
+                  isLoadingSkillGapAnalysisDetail ||
+                  skillGapAnalysisDetail?.status === "GENERATING" ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generating skill gap analysis...
+                    </div>
+                  ) : skillGapAnalysisDetail ? (
+                    <div className="space-y-4 text-sm">
+                      {skillGapAnalysisDetail.error_message && (
+                        <p className="text-destructive">
+                          {skillGapAnalysisDetail.error_message}
+                        </p>
+                      )}
+                      {skillGapAnalysisDetail.alternative_suggestions?.summary && (
+                        <p className="text-muted-foreground">
+                          {skillGapAnalysisDetail.alternative_suggestions.summary}
+                        </p>
+                      )}
+                      {skillGapAnalysisDetail.missing_skills?.length > 0 && (
+                        <div>
+                          <p className="font-medium">Missing skills</p>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {skillGapAnalysisDetail.missing_skills.map((skill) => (
+                              <Badge key={skill} variant="secondary" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {skillGapAnalysisDetail.skill_gaps &&
+                      Object.keys(skillGapAnalysisDetail.skill_gaps).length > 0 ? (
+                        <div>
+                          <p className="font-medium">Skill gaps</p>
+                          <div className="mt-2 space-y-2">
+                            {Object.entries(skillGapAnalysisDetail.skill_gaps).map(
+                              ([skill, gap]) => (
+                                <div
+                                  key={skill}
+                                  className="flex flex-col gap-1 rounded-md border px-3 py-2"
+                                >
+                                  <div className="flex flex-wrap items-center justify-between gap-2">
+                                    <span className="font-medium">{skill}</span>
+                                    <Badge variant="outline" className="text-xs">
+                                      {gap.gap_size} gap
+                                    </Badge>
+                                  </div>
+                                  <p className="text-xs text-muted-foreground">
+                                    Current: {gap.current_level} • Required: {gap.required_level}
+                                  </p>
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                      {skillGapAnalysisDetail.recommended_actions?.length > 0 && (
+                        <div>
+                          <p className="font-medium">Recommended actions</p>
+                          <div className="mt-2 space-y-2">
+                            {skillGapAnalysisDetail.recommended_actions.map((action, index) => (
+                              <div
+                                key={`${action.skill ?? "action"}-${index}`}
+                                className="rounded-md border px-3 py-2"
+                              >
+                                <div className="flex flex-wrap items-center justify-between gap-2">
+                                  <span className="font-medium">
+                                    {action.skill || "Recommendation"}
+                                  </span>
+                                  {action.action_type && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {action.action_type}
+                                    </Badge>
+                                  )}
+                                </div>
+                                {action.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {action.description}
+                                  </p>
+                                )}
+                                {action.resource && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Resource: {action.resource}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No analysis yet. Run a skill gap analysis to see recommendations.
+                    </p>
+                  )}
+                </div>
+              )}
               {opportunity.op_type.name === "JOB" && (
                 <div className="border-t pt-4 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">

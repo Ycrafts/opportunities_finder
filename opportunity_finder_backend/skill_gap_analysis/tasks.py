@@ -11,7 +11,14 @@ from .models import SkillGapAnalysis
 from .services.skill_gap_analyzer import SkillGapAnalyzer
 
 
-@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3}, priority=9)
+@shared_task(
+    bind=True,
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    retry_kwargs={"max_retries": 3},
+    priority=9,
+    queue="priority",
+)
 def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
     """
     Asynchronous task to perform skill gap analysis.
@@ -55,7 +62,28 @@ def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
             opportunity=analysis.opportunity
         ).values_list("match_score", flat=True).first()
 
-        if match_score is not None and match_score < low_fit_threshold:
+        if match_score is None:
+            analysis.status = SkillGapAnalysis.Status.COMPLETED
+            analysis.missing_skills = []
+            analysis.skill_gaps = {}
+            analysis.recommended_actions = []
+            analysis.alternative_suggestions = {
+                "summary": (
+                    "This opportunity hasn't been matched to your profile yet. "
+                    "We can only provide a high-level summary until a match is established."
+                ),
+                "reason": "no_match",
+            }
+            analysis.confidence_score = 0.2
+            analysis.estimated_time_months = None
+            analysis.completed_at = timezone.now()
+            analysis.save()
+            return {
+                "status": "completed_no_match",
+                "analysis_id": analysis_id,
+            }
+
+        if match_score < low_fit_threshold:
             analysis.status = SkillGapAnalysis.Status.COMPLETED
             analysis.missing_skills = []
             analysis.skill_gaps = {}
