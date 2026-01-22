@@ -74,7 +74,7 @@ export default function Home() {
       <Header />
       <main className="flex-1 relative">
         {/* Hero Section */}
-        <section className="relative flex min-h-screen w-full flex-col items-center justify-center gap-8 px-4 py-24 text-center overflow-hidden">
+        <section className="relative flex min-h-screen w-full flex-col items-center md:items-start justify-center gap-8 px-4 py-24 text-center md:text-left overflow-hidden">
           
           <div className="absolute inset-0 -z-10">
             <AnimatePresence>
@@ -99,25 +99,20 @@ export default function Home() {
             <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" /> 
           </div>
 
+        <div className="container relative z-10 flex flex-col items-start text-left max-w-5xl self-start pl-4 md:pl-8 lg:pl-16">
+        <FadeIn delay={0.1}>
+          <motion.h1
+            className="text-2xl sm:text-4xl lg:text-7xl font-black tracking-tighter text-white leading-[1.1] uppercase"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          >
+            Match.<br />
+            Connect. <span className="text-[#64e781]">Succeed.</span><br />
+            Advance.
+          </motion.h1>
+        </FadeIn>
 
-          <FadeIn delay={0.1}>
-            <motion.h1
-              className="text-3xl font-black tracking-tight text-white sm:text-5xl lg:text-6xl relative z-10"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            >
-              The bridge between your skills 
-              <motion.span
-                className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent block sm:inline"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                {" "}and the right opportunities
-              </motion.span>
-            </motion.h1>
-          </FadeIn>
 
           <FadeIn delay={0.4}>
             <p className="max-w-2xl text-lg text-white/80 sm:text-xl relative z-10">
@@ -126,7 +121,7 @@ export default function Home() {
           </FadeIn>
 
           <FadeIn delay={0.6}>
-            <div className="flex flex-col gap-4 sm:flex-row relative z-10">
+            <div className="flex flex-col gap-4 sm:flex-row relative z-10 mt-10">
               {isAuthenticated ? (
                 <Button size="lg" className="text-base gap-2 bg-[#0f9b57] hover:bg-[#0d884d]" asChild>
                     <Link href="/dashboard">Go to Dashboard</Link>
@@ -150,6 +145,7 @@ export default function Home() {
               )}
             </div>
           </FadeIn>
+          </div>
         </section>
 
         {/* Features Section */}
@@ -295,25 +291,25 @@ export default function Home() {
                       <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: '#0f9b57' }}>
                         <span className="text-white font-semibold">1</span>
                       </div>
-                      <p className="mt-4 text-sm md:text-base">Register and tell us a little about yourself.</p>
+                      <p className="mt-4 text-sm md:text-base">Register and upload your CV so our AI can automatically extract your skills and build your professional digital profile in seconds.</p>
                     </li>
                     <li className="flex flex-col items-center text-center">
                       <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: '#0f9b57' }}>
                         <span className="text-white font-semibold">2</span>
                       </div>
-                      <p className="mt-4 text-sm md:text-base">Enroll in a job sim and complete tasks that replicate real work.</p>
+                      <p className="mt-4 text-sm md:text-base">Our automated engine harvests jobs and scholarships to centralize every relevant opportunity in one place.</p>
                     </li>
                     <li className="flex flex-col items-center text-center">
                       <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: '#0f9b57' }}>
                         <span className="text-white font-semibold">3</span>
                       </div>
-                      <p className="mt-4 text-sm md:text-base">Compare your work with model answers and earn a certificate.</p>
+                      <p className="mt-4 text-sm md:text-base">Review your personalized match scores and use our AI analysis to identify exactly which skills you are missing for your target role.</p>
                     </li>
                     <li className="flex flex-col items-center text-center">
                       <div className="z-10 flex h-12 w-12 items-center justify-center rounded-full" style={{ backgroundColor: '#0f9b57' }}>
                         <span className="text-white font-semibold">4</span>
                       </div>
-                      <p className="mt-4 text-sm md:text-base">Access curated resources and a chance to connect with recruiters.</p>
+                      <p className="mt-4 text-sm md:text-base">Receive real-time alerts and use our generative tools to draft tailored cover letters that help you stand out to recruiters.</p>
                     </li>
                   </ul>
                 </div>
