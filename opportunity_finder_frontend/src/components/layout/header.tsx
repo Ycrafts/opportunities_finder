@@ -19,7 +19,7 @@ export function Header() {
   const { isAuthenticated, user, logout, isLoading } = useAuth();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent border-0 backdrop-blur-0 supports-[backdrop-filter]:bg-transparent">
       <motion.div
         className="container flex h-16 items-center justify-between px-4"
         initial={{ y: -20, opacity: 0 }}
@@ -99,6 +99,7 @@ export function Header() {
                         );
                       }
                     }}
+                    className="bg-[#0f9b57] hover:bg-[#0d884d]"
                   >
                     Get Started
                   </Button>
