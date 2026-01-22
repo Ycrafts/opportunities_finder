@@ -1,15 +1,24 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .serializers import (
     EmailTokenObtainPairSerializer,
+    DeleteAccountSerializer,
     LogoutSerializer,
     MeSerializer,
+    PasswordChangeSerializer,
     RegisterSerializer,
 )
+
+
+def blacklist_user_tokens(user):
+    tokens = OutstandingToken.objects.filter(user=user)
+    for token in tokens:
+        BlacklistedToken.objects.get_or_create(token=token)
 
 
 class RegisterView(generics.CreateAPIView):
@@ -73,4 +82,38 @@ class LogoutView(generics.GenericAPIView):
                 {"refresh": "Invalid or expired token."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class LogoutAllView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        blacklist_user_tokens(request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordChangeView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = PasswordChangeSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        request.user.set_password(serializer.validated_data["new_password"])
+        request.user.save(update_fields=["password"])
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DeleteAccountView(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = DeleteAccountSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        blacklist_user_tokens(user)
+        user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

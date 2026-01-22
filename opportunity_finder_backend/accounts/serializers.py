@@ -50,6 +50,38 @@ class LogoutSerializer(serializers.Serializer):
     refresh = serializers.CharField()
 
 
+class PasswordChangeSerializer(serializers.Serializer):
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if not user.check_password(attrs.get("current_password")):
+            raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+
+        try:
+            validate_password(password=attrs.get("new_password"), user=user)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"new_password": list(e.messages)})
+
+        return attrs
+
+
+class DeleteAccountSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True)
+    confirm = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = self.context["request"].user
+        if attrs.get("confirm", "").strip().upper() != "DELETE":
+            raise serializers.ValidationError({"confirm": "Type DELETE to confirm account removal."})
+
+        if not user.check_password(attrs.get("password")):
+            raise serializers.ValidationError({"password": "Password is incorrect."})
+
+        return attrs
+
+
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     """
     Uses USERNAME_FIELD from the configured user model (email).
