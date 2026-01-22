@@ -32,7 +32,7 @@ class IngestionRunner:
         self.registry = registry or AdapterRegistry()
         self.writer = writer or RawOpportunityWriter()
 
-    def run_source(self, *, source: Source, limit: int = 50) -> WriteResult:
+    def run_source(self, *, source: Source, limit: int = 20) -> WriteResult:
         adapter_cls = self.registry.get_adapter_class(source.source_type)
         adapter = adapter_cls()
 
@@ -57,7 +57,7 @@ class IngestionRunner:
             # Re-raise the exception
             raise
 
-    def run_all(self, *, source_type: str | None = None, limit: int = 50) -> RunSummary:
+    def run_all(self, *, source_type: str | None = None, limit: int = 20) -> RunSummary:
         qs = Source.objects.filter(enabled=True)
         if source_type:
             qs = qs.filter(source_type=source_type)
