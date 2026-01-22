@@ -92,16 +92,20 @@ class SourceAdmin(admin.ModelAdmin):
 
     def success_rate_display(self, obj):
         """Display success rate with color coding."""
-        rate = obj.success_rate
+        try:
+            rate = float(obj.success_rate or 0)
+        except (TypeError, ValueError):
+            rate = 0.0
         if rate >= 90:
             color = "green"
         elif rate >= 70:
             color = "orange"
         else:
             color = "red"
+        rate_text = f"{rate:.1f}%"
         return format_html(
-            '<span style="color: {};">{:.1f}%</span>',
-            color, rate
+            '<span style="color: {};">{}</span>',
+            color, rate_text
         )
     success_rate_display.short_description = "Success Rate"
     success_rate_display.admin_order_field = "successful_runs"
