@@ -1,5 +1,6 @@
 from celery import shared_task
 
+from ai.errors import sanitize_ai_error_message
 from .models import CVExtractionSession
 from .services.cv_extractor import CVExtractionService
 
@@ -26,6 +27,6 @@ def process_cv_extraction(self, session_id: int) -> dict:
         # Mark session as failed
         CVExtractionSession.objects.filter(id=session_id).update(
             status=CVExtractionSession.Status.FAILED,
-            error_message=str(e)
+            error_message=sanitize_ai_error_message(e)
         )
         raise  # Re-raise for Celery retry logic

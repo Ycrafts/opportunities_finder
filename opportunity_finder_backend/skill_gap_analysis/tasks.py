@@ -7,6 +7,7 @@ from profiles.models import UserProfile
 
 from matching.models import Match
 
+from ai.errors import sanitize_ai_error_message
 from .models import SkillGapAnalysis
 from .services.skill_gap_analyzer import SkillGapAnalyzer
 
@@ -113,9 +114,9 @@ def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
         # Check for errors in analysis
         if "error" in analysis_result:
             analysis.status = SkillGapAnalysis.Status.FAILED
-            analysis.error_message = analysis_result["error"]
+            analysis.error_message = sanitize_ai_error_message(analysis_result["error"])
             analysis.save()
-            return {"status": "failed", "error": analysis_result["error"]}
+            return {"status": "failed", "error": analysis.error_message}
 
         # Update analysis record with results
         analysis.status = SkillGapAnalysis.Status.COMPLETED
@@ -143,9 +144,9 @@ def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
         # Update analysis status on failure
         try:
             analysis.status = SkillGapAnalysis.Status.FAILED
-            analysis.error_message = str(e)
+            analysis.error_message = sanitize_ai_error_message(e)
             analysis.save()
         except Exception:
             pass  # If we can't save the error, just log it
 
-        return {"status": "failed", "error": str(e)}
+        return {"status": "failed", "error": sanitize_ai_error_message(e)}

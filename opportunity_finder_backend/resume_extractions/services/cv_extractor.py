@@ -5,7 +5,7 @@ from typing import Any
 
 from django.utils import timezone
 
-from ai.errors import AITransientError, AIPermanentError
+from ai.errors import AITransientError, AIPermanentError, sanitize_ai_error_message
 from ai.router import get_provider
 
 from ..models import CVExtractionSession
@@ -205,6 +205,6 @@ Return the extracted information in the specified JSON format."""
 
         except Exception as e:
             session.status = CVExtractionSession.Status.FAILED
-            session.error_message = str(e)
+            session.error_message = sanitize_ai_error_message(e)
             session.save()
             raise
