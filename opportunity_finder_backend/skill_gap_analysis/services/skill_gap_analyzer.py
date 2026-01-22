@@ -174,14 +174,14 @@ JOB OPPORTUNITY:
 TASK:
 Perform a detailed skill gap analysis comparing the user's current qualifications against this job opportunity's requirements.
 
-ANALYSIS REQUIREMENTS:
+ANALYSIS REQUIREMENTS (keep it concise):
 
-1. **Missing Skills**: List specific technical and soft skills the user lacks for this role
-2. **Skill Gaps**: For each skill (both present and missing), assess:
+1. **Missing Skills**: List the top 5 most important missing skills.
+2. **Skill Gaps**: For the top 5 highest-priority skills only (including any missing ones), assess:
    - User's current proficiency level (Beginner/Intermediate/Advanced/Expert)
    - Required proficiency level for this job
    - Gap assessment (None/Small/Medium/Large)
-3. **Recommended Actions**: Provide specific, actionable learning recommendations:
+3. **Recommended Actions**: Provide up to 5 specific, actionable learning recommendations:
    - Online courses (Coursera, Udemy, edX)
    - Certifications to pursue
    - Projects to build
@@ -201,7 +201,7 @@ ANALYSIS GUIDELINES:
 - Focus on high-impact skills for this specific role
 - Rate confidence in your analysis (0.0-1.0)
 
-Return analysis as structured JSON with the following format:
+Return analysis as structured JSON with the following format (keep arrays short, max 5 items):
 {{
   "missing_skills": ["skill1", "skill2", ...],
   "skill_gaps": {{
@@ -343,12 +343,13 @@ Return analysis as structured JSON with the following format:
         cleaned["missing_skills"] = data.get("missing_skills", [])
         if not isinstance(cleaned["missing_skills"], list):
             cleaned["missing_skills"] = []
+        cleaned["missing_skills"] = cleaned["missing_skills"][:5]
 
         # Ensure skill_gaps is a dict with proper structure
         skill_gaps = data.get("skill_gaps", {})
         if isinstance(skill_gaps, dict):
             cleaned_skill_gaps = {}
-            for skill_name, gap_info in skill_gaps.items():
+            for skill_name, gap_info in list(skill_gaps.items())[:5]:
                 if isinstance(gap_info, dict):
                     cleaned_skill_gaps[skill_name] = {
                         "current_level": gap_info.get("current_level", "Beginner"),
@@ -364,7 +365,7 @@ Return analysis as structured JSON with the following format:
         recommended_actions = data.get("recommended_actions", [])
         if isinstance(recommended_actions, list):
             cleaned_actions = []
-            for action in recommended_actions:
+            for action in recommended_actions[:5]:
                 if isinstance(action, dict):
                     cleaned_actions.append({
                         "skill": action.get("skill", ""),

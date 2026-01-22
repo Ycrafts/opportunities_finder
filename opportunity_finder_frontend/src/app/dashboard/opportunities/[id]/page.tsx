@@ -87,9 +87,9 @@ const formatExperienceLevel = (level: string) => {
 
 const formatCompensation = (min: number | null, max: number | null) => {
   if (!min && !max) return null;
-  if (min && max) return `$${min.toLocaleString()} - $${max.toLocaleString()}`;
-  if (min) return `From $${min.toLocaleString()}`;
-  if (max) return `Up to $${max.toLocaleString()}`;
+  if (min && max) return `ETB ${min.toLocaleString()} - ETB ${max.toLocaleString()}`;
+  if (min) return `From ETB ${min.toLocaleString()}`;
+  if (max) return `Up to ETB ${max.toLocaleString()}`;
   return null;
 };
 
@@ -482,8 +482,8 @@ export default function OpportunityDetailPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {compensation && (
                   <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    <span>{compensation}</span>
+                    <span className="text-muted-foreground text-xs">ETB</span>
+                    <span>{compensation.replace("ETB ", "")}</span>
                   </div>
                 )}
                 {opportunity.deadline && (
@@ -501,11 +501,13 @@ export default function OpportunityDetailPage() {
                 </p>
               </div>
               {opportunity.op_type.name === "JOB" && (
-                <div className="border-t pt-4 space-y-4">
+                <div className="border-t pt-4 space-y-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-sm font-semibold">Skill Gap Analysis</h3>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide">
+                      Skill gap analysis
+                    </h3>
                     {skillGapAnalysisDetail?.status && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="outline" className="text-[10px] h-5">
                         {skillGapAnalysisDetail.status}
                       </Badge>
                     )}
@@ -513,28 +515,30 @@ export default function OpportunityDetailPage() {
                   {isLoadingSkillGapAnalyses ||
                   isLoadingSkillGapAnalysisDetail ||
                   skillGapAnalysisDetail?.status === "GENERATING" ? (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Generating skill gap analysis...
                     </div>
                   ) : skillGapAnalysisDetail ? (
-                    <div className="space-y-4 text-sm">
+                    <div className="space-y-3 text-xs">
                       {skillGapAnalysisDetail.error_message && (
-                        <p className="text-destructive">
+                        <p className="text-destructive text-xs">
                           {skillGapAnalysisDetail.error_message}
                         </p>
                       )}
                       {skillGapAnalysisDetail.alternative_suggestions?.summary && (
-                        <p className="text-muted-foreground">
+                        <p className="text-muted-foreground text-xs">
                           {skillGapAnalysisDetail.alternative_suggestions.summary}
                         </p>
                       )}
                       {skillGapAnalysisDetail.missing_skills?.length > 0 && (
                         <div>
-                          <p className="font-medium">Missing skills</p>
-                          <div className="flex flex-wrap gap-2 mt-2">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Missing skills
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 mt-2">
                             {skillGapAnalysisDetail.missing_skills.map((skill) => (
-                              <Badge key={skill} variant="secondary" className="text-xs">
+                              <Badge key={skill} variant="secondary" className="text-[10px]">
                                 {skill}
                               </Badge>
                             ))}
@@ -544,21 +548,23 @@ export default function OpportunityDetailPage() {
                       {skillGapAnalysisDetail.skill_gaps &&
                       Object.keys(skillGapAnalysisDetail.skill_gaps).length > 0 ? (
                         <div>
-                          <p className="font-medium">Skill gaps</p>
-                          <div className="mt-2 space-y-2">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Skill gaps
+                          </p>
+                          <div className="mt-2 grid gap-2 sm:grid-cols-2">
                             {Object.entries(skillGapAnalysisDetail.skill_gaps).map(
                               ([skill, gap]) => (
                                 <div
                                   key={skill}
-                                  className="flex flex-col gap-1 rounded-md border px-3 py-2"
+                                  className="flex flex-col gap-1 rounded-md border px-2.5 py-2"
                                 >
                                   <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <span className="font-medium">{skill}</span>
-                                    <Badge variant="outline" className="text-xs">
+                                    <span className="font-medium text-xs">{skill}</span>
+                                    <Badge variant="outline" className="text-[10px] h-5">
                                       {gap.gap_size} gap
                                     </Badge>
                                   </div>
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-[11px] text-muted-foreground">
                                     Current: {gap.current_level} • Required: {gap.required_level}
                                   </p>
                                 </div>
@@ -569,30 +575,32 @@ export default function OpportunityDetailPage() {
                       ) : null}
                       {skillGapAnalysisDetail.recommended_actions?.length > 0 && (
                         <div>
-                          <p className="font-medium">Recommended actions</p>
-                          <div className="mt-2 space-y-2">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                            Recommended actions
+                          </p>
+                          <div className="mt-2 grid gap-2 sm:grid-cols-2">
                             {skillGapAnalysisDetail.recommended_actions.map((action, index) => (
                               <div
                                 key={`${action.skill ?? "action"}-${index}`}
-                                className="rounded-md border px-3 py-2"
+                                className="rounded-md border px-2.5 py-2"
                               >
                                 <div className="flex flex-wrap items-center justify-between gap-2">
-                                  <span className="font-medium">
+                                  <span className="font-medium text-xs">
                                     {action.skill || "Recommendation"}
                                   </span>
                                   {action.action_type && (
-                                    <Badge variant="outline" className="text-xs">
+                                    <Badge variant="outline" className="text-[10px] h-5">
                                       {action.action_type}
                                     </Badge>
                                   )}
                                 </div>
                                 {action.description && (
-                                  <p className="text-xs text-muted-foreground mt-1">
+                                  <p className="text-[11px] text-muted-foreground mt-1">
                                     {action.description}
                                   </p>
                                 )}
                                 {action.resource && (
-                                  <p className="text-xs text-muted-foreground">
+                                  <p className="text-[11px] text-muted-foreground">
                                     Resource: {action.resource}
                                   </p>
                                 )}
@@ -603,7 +611,7 @@ export default function OpportunityDetailPage() {
                       )}
                     </div>
                   ) : (
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       No analysis yet. Run a skill gap analysis to see recommendations.
                     </p>
                   )}
