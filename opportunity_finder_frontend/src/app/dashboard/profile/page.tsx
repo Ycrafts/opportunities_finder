@@ -44,7 +44,6 @@ const navItems = [
   { title: "Matches", href: "/dashboard/matches", icon: Target },
   { title: "Profile", href: "/dashboard/profile", icon: Users },
   { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
-  { title: "Cover Letters", href: "/dashboard/cover-letters", icon: FileText },
   { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
 ];

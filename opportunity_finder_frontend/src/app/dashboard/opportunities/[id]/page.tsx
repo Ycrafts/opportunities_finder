@@ -202,6 +202,12 @@ export default function OpportunityDetailPage() {
     },
   });
 
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
   const updateCoverLetterMutation = useMutation({
     mutationFn: async (updatedContent: string) => {
       if (!coverLetter) {
@@ -238,7 +244,6 @@ export default function OpportunityDetailPage() {
   }
 
   if (!isAuthenticated) {
-    router.push("/");
     return null;
   }
 
@@ -296,22 +301,21 @@ export default function OpportunityDetailPage() {
                   </CardDescription>
                 </div>
                 <div className="flex flex-col gap-2 w-full md:w-56">
-                  <Button
-                    variant="default"
-                    className="gap-2 w-full"
-                    disabled={
-                      opportunity.op_type.name !== "JOB" ||
-                      generateCoverLetterMutation.isPending
-                    }
-                    onClick={() => generateCoverLetterMutation.mutate()}
-                  >
-                    {generateCoverLetterMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <FileText className="h-4 w-4" />
-                    )}
-                    Generate Cover Letter
-                  </Button>
+                  {opportunity.op_type.name === "JOB" && (
+                    <Button
+                      variant="default"
+                      className="gap-2 w-full"
+                      disabled={generateCoverLetterMutation.isPending}
+                      onClick={() => generateCoverLetterMutation.mutate()}
+                    >
+                      {generateCoverLetterMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <FileText className="h-4 w-4" />
+                      )}
+                      Generate Cover Letter
+                    </Button>
+                  )}
                   {opportunity.source_url && (
                     <Button asChild variant="outline" className="gap-2 w-full">
                       <a
@@ -380,78 +384,80 @@ export default function OpportunityDetailPage() {
                   {opportunity.description_en || "No description provided."}
                 </p>
               </div>
-              <div className="border-t pt-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-sm font-semibold">Cover Letter</h3>
-                  {coverLetterDetail?.status && (
-                    <Badge variant="outline" className="text-xs">
-                      {coverLetterDetail.status}
-                    </Badge>
+              {opportunity.op_type.name === "JOB" && (
+                <div className="border-t pt-4 space-y-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">Cover Letter</h3>
+                    {coverLetterDetail?.status && (
+                      <Badge variant="outline" className="text-xs">
+                        {coverLetterDetail.status}
+                      </Badge>
+                    )}
+                  </div>
+                  {isLoadingCoverLetters || isLoadingCoverLetterDetail ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading cover letter...
+                    </div>
+                  ) : coverLetterDetail ? (
+                    <div className="space-y-3">
+                      {coverLetterDetail.status === "GENERATING" && (
+                        <p className="text-sm text-muted-foreground">
+                          Generating your cover letter. It will appear here automatically.
+                        </p>
+                      )}
+                      <Textarea
+                        value={coverLetterDraft}
+                        onChange={(event) => {
+                          setCoverLetterDraft(event.target.value);
+                          setHasEditedDraft(true);
+                        }}
+                        placeholder="Your cover letter will appear here."
+                        className="min-h-[220px] text-sm"
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="default"
+                          className="gap-2"
+                          disabled={
+                            updateCoverLetterMutation.isPending ||
+                            !hasEditedDraft ||
+                            !coverLetterDraft.trim()
+                          }
+                          onClick={() =>
+                            updateCoverLetterMutation.mutate(coverLetterDraft)
+                          }
+                        >
+                          {updateCoverLetterMutation.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : null}
+                          Save edits
+                        </Button>
+                        <Button
+                          variant="outline"
+                          disabled={updateCoverLetterMutation.isPending}
+                          onClick={() => {
+                            setCoverLetterDraft(coverLetterDetail.final_content || "");
+                            setHasEditedDraft(false);
+                          }}
+                        >
+                          Reset
+                        </Button>
+                      </div>
+                      {coverLetterDetail.status === "FAILED" &&
+                        coverLetterDetail.error_message && (
+                        <p className="text-sm text-destructive">
+                          {coverLetterDetail.error_message}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No cover letter yet. Generate one to start editing.
+                    </p>
                   )}
                 </div>
-                {isLoadingCoverLetters || isLoadingCoverLetterDetail ? (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading cover letter...
-                  </div>
-                ) : coverLetterDetail ? (
-                  <div className="space-y-3">
-                    {coverLetterDetail.status === "GENERATING" && (
-                      <p className="text-sm text-muted-foreground">
-                        Generating your cover letter. It will appear here automatically.
-                      </p>
-                    )}
-                    <Textarea
-                      value={coverLetterDraft}
-                      onChange={(event) => {
-                        setCoverLetterDraft(event.target.value);
-                        setHasEditedDraft(true);
-                      }}
-                      placeholder="Your cover letter will appear here."
-                      className="min-h-[220px] text-sm"
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        variant="default"
-                        className="gap-2"
-                        disabled={
-                          updateCoverLetterMutation.isPending ||
-                          !hasEditedDraft ||
-                          !coverLetterDraft.trim()
-                        }
-                        onClick={() =>
-                          updateCoverLetterMutation.mutate(coverLetterDraft)
-                        }
-                      >
-                        {updateCoverLetterMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : null}
-                        Save edits
-                      </Button>
-                      <Button
-                        variant="outline"
-                        disabled={updateCoverLetterMutation.isPending}
-                        onClick={() => {
-                          setCoverLetterDraft(coverLetterDetail.final_content || "");
-                          setHasEditedDraft(false);
-                        }}
-                      >
-                        Reset
-                      </Button>
-                    </div>
-                    {coverLetterDetail.status === "FAILED" &&
-                      coverLetterDetail.error_message && (
-                      <p className="text-sm text-destructive">
-                        {coverLetterDetail.error_message}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No cover letter yet. Generate one to start editing.
-                  </p>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
         </FadeIn>

@@ -25,6 +25,7 @@ urlpatterns = [
     path("api/profile/", include("profiles.urls")),
     path("api/config/", include("configs.urls")),
     path("api/opportunities/", include("opportunities.urls")),
+    path("api/matches/", include("matching.urls")),
     path("api/notifications/", include("notifications.urls")),
     path("api/cv-extraction/", include("resume_extractions.urls")),
     path("api/cover-letters/", include("cover_letters.urls")),

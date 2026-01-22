@@ -5,6 +5,8 @@ from django.utils import timezone
 from opportunities.models import Opportunity
 from profiles.models import UserProfile
 
+from matching.models import Match
+
 from .models import SkillGapAnalysis
 from .services.skill_gap_analyzer import SkillGapAnalyzer
 
@@ -45,6 +47,36 @@ def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
 
         # Get opportunity
         opportunity = analysis.opportunity
+
+        # Guardrail: if match score is too low, return a lightweight summary
+        low_fit_threshold = 3.5
+        match_score = Match.objects.filter(
+            user=analysis.user,
+            opportunity=analysis.opportunity
+        ).values_list("match_score", flat=True).first()
+
+        if match_score is not None and match_score < low_fit_threshold:
+            analysis.status = SkillGapAnalysis.Status.COMPLETED
+            analysis.missing_skills = []
+            analysis.skill_gaps = {}
+            analysis.recommended_actions = []
+            analysis.alternative_suggestions = {
+                "summary": (
+                    "Your current profile appears far from this role's requirements. "
+                    "Consider focusing on foundational skills or adjacent roles first."
+                ),
+                "reason": "low_match_score",
+                "match_score": match_score,
+            }
+            analysis.confidence_score = 0.2
+            analysis.estimated_time_months = None
+            analysis.completed_at = timezone.now()
+            analysis.save()
+            return {
+                "status": "completed_low_fit",
+                "analysis_id": analysis_id,
+                "match_score": match_score,
+            }
 
         # Perform analysis
         analyzer = SkillGapAnalyzer()
