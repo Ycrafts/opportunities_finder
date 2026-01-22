@@ -18,7 +18,8 @@ services:
     ports:
       - "8000:8000"
     volumes:
-    - ./opportunity_finder_backend/db_dump.json:/app/db_dump.json
+      - ./opportunity_finder_backend/db_dump.json:/app/db_dump.json
+      - ./opportunity_finder_backend/media:/app/media
 
   celery-worker:
     build:
@@ -34,6 +35,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - ./opportunity_finder_backend/media:/app/media
     command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo", "-Q", "default"]
 
   celery-worker-priority:
@@ -50,6 +53,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - ./opportunity_finder_backend/media:/app/media
     command: ["celery", "-A", "opportunity_finder", "worker", "--loglevel=INFO", "--pool=solo", "-Q", "priority"]
 
   celery-beat:
@@ -66,6 +71,8 @@ services:
     depends_on:
       - db
       - redis
+    volumes:
+      - ./opportunity_finder_backend/media:/app/media
     command: ["celery", "-A", "opportunity_finder", "beat", "--loglevel=INFO"]
 
   redis:

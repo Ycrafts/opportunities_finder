@@ -5,6 +5,7 @@ from django.core.mail import send_mail
 
 from notifications.models import Notification, NotificationChannel
 from notifications.providers.base import BaseNotificationProvider, NotificationResult
+from notifications.providers.brevo import get_brevo_client
 
 
 class EmailNotificationProvider(BaseNotificationProvider):
@@ -22,6 +23,25 @@ class EmailNotificationProvider(BaseNotificationProvider):
         """Send email notification."""
         try:
             subject, message = self.render_template(notification)
+
+            brevo_client = get_brevo_client()
+            if brevo_client:
+                result = brevo_client.send_email(
+                    to_email=notification.user.email,
+                    subject=subject,
+                    text=message,
+                )
+                if result.get("success"):
+                    return NotificationResult(
+                        success=True,
+                        message_id=f"brevo_{notification.id}",
+                        provider_response=result,
+                    )
+                return NotificationResult(
+                    success=False,
+                    error_message=result.get("error", "Brevo send failed"),
+                    provider_response=result,
+                )
 
             # Send email
             result = send_mail(

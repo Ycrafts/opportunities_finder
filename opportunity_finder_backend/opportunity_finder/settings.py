@@ -201,6 +201,11 @@ PYROGRAM_API_ID = os.getenv("PYROGRAM_API_ID")
 PYROGRAM_API_HASH = os.getenv("PYROGRAM_API_HASH")
 PYROGRAM_SESSION_STRING = os.getenv("PYROGRAM_SESSION_STRING")
 
+# Brevo email (transactional)
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Opportunity Finder")
+
 # AI (provider router)
 AI_PROVIDER = os.getenv("AI_PROVIDER", "stub").strip().lower()
 AI_PROVIDER_CHAIN = [p.strip().lower() for p in env_csv("AI_PROVIDER_CHAIN", default=[]) if p.strip()]
