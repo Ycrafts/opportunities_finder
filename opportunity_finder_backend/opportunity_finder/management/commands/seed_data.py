@@ -109,6 +109,26 @@ class Command(BaseCommand):
         internship_type, _ = OpportunityType.objects.get_or_create(name='INTERNSHIP')
         training_type, _ = OpportunityType.objects.get_or_create(name='TRAINING')
 
+        # Catch-all domains (for low-confidence fallback)
+        job_other_domain, _ = Domain.objects.get_or_create(
+            name='Other', opportunity_type=job_type
+        )
+        scholarship_other_domain, _ = Domain.objects.get_or_create(
+            name='Other', opportunity_type=scholarship_type
+        )
+        internship_other_domain, _ = Domain.objects.get_or_create(
+            name='Other', opportunity_type=internship_type
+        )
+        training_other_domain, _ = Domain.objects.get_or_create(
+            name='Other', opportunity_type=training_type
+        )
+
+        # Catch-all specializations
+        Specialization.objects.get_or_create(name='General', domain=job_other_domain)
+        Specialization.objects.get_or_create(name='General', domain=scholarship_other_domain)
+        Specialization.objects.get_or_create(name='General', domain=internship_other_domain)
+        Specialization.objects.get_or_create(name='General', domain=training_other_domain)
+
         # Job Domains
         software_domain, _ = Domain.objects.get_or_create(
             name='Software', opportunity_type=job_type

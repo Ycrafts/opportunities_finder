@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import difflib
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
@@ -279,7 +280,12 @@ class RawOpportunityExtractor:
             except Specialization.DoesNotExist:
                 opp.specialization_id = None
 
-    def _apply_taxonomy_fallbacks(self, opp: Opportunity, text_en: str) -> None:
+    def _apply_taxonomy_fallbacks(
+        self,
+        opp: Opportunity,
+        text_en: str,
+        confidence: float | None,
+    ) -> None:
         """
         Apply fallback logic when AI extraction fails to provide valid taxonomy.
 
@@ -289,6 +295,25 @@ class RawOpportunityExtractor:
         from opportunities.models import OpportunityType, Domain, Specialization
 
         text_lower = text_en.lower()
+
+        # If confidence is low, force "Other/General" fallback when available
+        threshold = getattr(settings, "EXTRACTION_CONFIDENCE_THRESHOLD", 0.6)
+        if opp.op_type_id and confidence is not None and confidence < threshold:
+            op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
+            if op_type:
+                other_domain = Domain.objects.filter(name="Other", opportunity_type=op_type).first()
+                if other_domain:
+                    other_spec = Specialization.objects.filter(name="General", domain=other_domain).first()
+                    if other_spec:
+                        opp.domain = other_domain
+                        opp.specialization = other_spec
+                        flags = dict((opp.metadata or {}).get("flags") or {})
+                        flags["low_confidence_taxonomy_fallback"] = True
+                        opp.metadata = {
+                            **(opp.metadata or {}),
+                            "flags": flags,
+                        }
+                        return
 
         # If domain/specialization are null but op_type is set, try to infer reasonable defaults
         if opp.op_type_id and (not opp.domain_id or not opp.specialization_id):
@@ -909,7 +934,7 @@ class RawOpportunityExtractor:
                 self._fix_taxonomy_inconsistencies(opp)
 
                 # Apply fallback logic for common extraction failures
-                self._apply_taxonomy_fallbacks(opp, text_en)
+                self._apply_taxonomy_fallbacks(opp, text_en, data.get("confidence"))
 
                 # Final validation check: ensure required fields are set
                 if not opp.domain_id or not opp.specialization_id:

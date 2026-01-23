@@ -240,6 +240,9 @@ HF_MODE = os.getenv("HF_MODE", "openai").strip().lower()  # openai | classic
 HF_MAX_NEW_TOKENS = int(os.getenv("HF_MAX_NEW_TOKENS", "256"))
 HF_WAIT_FOR_MODEL = env_bool("HF_WAIT_FOR_MODEL", default=True)
 
+# Extraction quality control
+EXTRACTION_CONFIDENCE_THRESHOLD = float(os.getenv("EXTRACTION_CONFIDENCE_THRESHOLD", "0.6"))
+
 # Celery (async tasks)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
