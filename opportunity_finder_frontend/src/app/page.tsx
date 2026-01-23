@@ -19,7 +19,7 @@ import { GradientBackground } from "@/components/animations/gradient-bg";
 import { AuthSection } from "@/components/auth/auth-section";
 import { CursorTrail } from "@/components/animations/cursor-trail";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { LayoutDashboard } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
@@ -67,6 +67,29 @@ export default function Home() {
 
     return () => clearTimeout(timer);
   }, [videoIndex]);
+
+  // Feature cards hover cycle: 0=Smart, 1=Real-time (default center), 2=AI-Powered
+  const [centerIdx, setCenterIdx] = useState(1);
+  const cycleRef = useRef<number | null>(null);
+  const onFeaturesEnter = () => {
+    if (cycleRef.current) return;
+    cycleRef.current = window.setInterval(() => {
+      setCenterIdx((c) => (c === 1 ? 2 : c === 2 ? 0 : 1));
+    }, 900);
+  };
+  const onFeaturesLeave = () => {
+    if (cycleRef.current) {
+      window.clearInterval(cycleRef.current);
+      cycleRef.current = null;
+    }
+    setCenterIdx(1);
+  };
+  const wrapCls = (i: number) => {
+    const rightOfCenter = (centerIdx + 1) % 3;
+    if (i === centerIdx) return "md:order-2 md:scale-110 md:z-20";
+    if (i === rightOfCenter) return "md:order-3 md:scale-95 md:z-10";
+    return "md:order-1 md:scale-95 md:z-10";
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -161,68 +184,76 @@ export default function Home() {
                 </p>
               </div>
             </FadeIn>
-            <StaggerContainer className="grid gap-8 md:grid-cols-3">
-              <StaggerItem>
-                <HoverLift>
-                  <Card className="h-full transition-all duration-300 hover:shadow-lg">
-                    <CardHeader>
-                      <motion.div
-                        className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
-                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <Target className="h-6 w-6 text-primary" />
-                      </motion.div>
-                      <CardTitle>Smart Matching</CardTitle>
-                      <CardDescription>
-                        AI-powered matching that understands your skills, experience, and
-                        preferences to surface the perfect opportunities.
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </HoverLift>
-              </StaggerItem>
-              <StaggerItem>
-                <HoverLift>
-                  <Card className="h-full transition-all duration-300 hover:shadow-lg">
-                    <CardHeader>
-                      <motion.div
-                        className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
-                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <Zap className="h-6 w-6 text-primary" />
-                      </motion.div>
-                      <CardTitle>Real-time Updates</CardTitle>
-                      <CardDescription>
-                        Get instant notifications when new opportunities match your profile. Never
-                        miss a chance to advance your career.
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </HoverLift>
-              </StaggerItem>
-              <StaggerItem>
-                <HoverLift>
-                  <Card className="h-full transition-all duration-300 hover:shadow-lg">
-                    <CardHeader>
-                      <motion.div
-                        className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
-                        whileHover={{ rotate: [0, -10, 10, -10, 0] }}
-                        transition={{ duration: 0.5 }}
-                      >
-                        <Sparkles className="h-6 w-6 text-primary" />
-                      </motion.div>
-                      <CardTitle>AI-Powered Tools</CardTitle>
-                      <CardDescription>
-                        Generate cover letters, analyze skill gaps, and get personalized insights
-                        to help you land your dream opportunity.
-                      </CardDescription>
-                    </CardHeader>
-                  </Card>
-                </HoverLift>
-              </StaggerItem>
-            </StaggerContainer>
+            <div onMouseEnter={onFeaturesEnter} onMouseLeave={onFeaturesLeave} className="md:flex md:justify-center md:items-stretch md:-space-x-6">
+              <StaggerContainer className="grid gap-6 md:flex md:gap-0">
+                <div className={`transition-all duration-300 md:basis-[22rem] md:flex-shrink-0 ${wrapCls(0)}`}>
+                  <StaggerItem>
+                    <HoverLift>
+                      <Card className="h-full transition-all duration-300 hover:shadow-lg bg-background/70 backdrop-blur-sm">
+                        <CardHeader>
+                          <motion.div
+                            className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                            whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <Target className="h-6 w-6 text-primary" />
+                          </motion.div>
+                          <CardTitle>Smart Matching</CardTitle>
+                          <CardDescription>
+                            AI-powered matching that understands your skills, experience, and
+                            preferences to surface the perfect opportunities.
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </HoverLift>
+                  </StaggerItem>
+                </div>
+                <div className={`transition-all duration-300 md:basis-[22rem] md:flex-shrink-0 ${wrapCls(1)}`}>
+                  <StaggerItem>
+                    <HoverLift>
+                      <Card className="h-full transition-all duration-300 hover:shadow-lg bg-background/70 backdrop-blur-sm">
+                        <CardHeader>
+                          <motion.div
+                            className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                            whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <Zap className="h-6 w-6 text-primary" />
+                          </motion.div>
+                          <CardTitle>Real-time Updates</CardTitle>
+                          <CardDescription>
+                            Get instant notifications when new opportunities match your profile. Never
+                            miss a chance to advance your career.
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </HoverLift>
+                  </StaggerItem>
+                </div>
+                <div className={`transition-all duration-300 md:basis-[22rem] md:flex-shrink-0 ${wrapCls(2)}`}>
+                  <StaggerItem>
+                    <HoverLift>
+                      <Card className="h-full transition-all duration-300 hover:shadow-lg bg-background/70 backdrop-blur-sm">
+                        <CardHeader>
+                          <motion.div
+                            className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10"
+                            whileHover={{ rotate: [0, -10, 10, -10, 0] }}
+                            transition={{ duration: 0.5 }}
+                          >
+                            <Sparkles className="h-6 w-6 text-primary" />
+                          </motion.div>
+                          <CardTitle>AI-Powered Tools</CardTitle>
+                          <CardDescription>
+                            Generate cover letters, analyze skill gaps, and get personalized insights
+                            to help you land your dream opportunity.
+                          </CardDescription>
+                        </CardHeader>
+                      </Card>
+                    </HoverLift>
+                  </StaggerItem>
+                </div>
+              </StaggerContainer>
+            </div>
           </div>
         </section>
 
