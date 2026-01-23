@@ -64,7 +64,7 @@ export function DashboardLayout({
           {/* Sidebar Header */}
           <div className="flex h-16 items-center justify-between border-b border-border/60 px-6">
             <Link href="/dashboard" className="text-base font-semibold tracking-tight">
-              Opportunity Finder
+              Findra
             </Link>
             <Button
               variant="ghost"

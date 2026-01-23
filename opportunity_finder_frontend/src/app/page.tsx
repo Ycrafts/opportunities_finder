@@ -357,7 +357,7 @@ export default function Home() {
       <footer className="border-t py-12">
         <div className="container flex flex-col items-center justify-between gap-4 px-4 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Opportunity Finder. All rights reserved.
+            © {new Date().getFullYear()} Findra. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <Link href="#" className="hover:text-foreground">
