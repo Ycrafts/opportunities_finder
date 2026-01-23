@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { FadeIn } from "@/components/animations/fade-in";
 import { useAuth } from "@/contexts/auth-context";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -60,10 +60,12 @@ export default function OpportunitiesPage() {
     is_remote: boolean | null;
     work_mode: string | null;
     experience_level: string | null;
+    status: string | null;
   }>({
     is_remote: null,
     work_mode: null,
     experience_level: null,
+    status: null,
   });
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -88,14 +90,15 @@ export default function OpportunitiesPage() {
       filters.is_remote,
       filters.work_mode,
       filters.experience_level,
+      filters.status,
     ],
     queryFn: ({ pageParam = 1 }) =>
       opportunitiesApi.list({
         q: searchQuery || undefined,
-        status: "ACTIVE",
         is_remote: filters.is_remote !== null ? filters.is_remote : undefined,
         work_mode: filters.work_mode || undefined,
         experience_level: filters.experience_level || undefined,
+        status: filters.status || undefined,
         page: pageParam,
       }),
     getNextPageParam: (lastPage) => {
@@ -111,8 +114,18 @@ export default function OpportunitiesPage() {
     enabled: isAuthenticated,
   });
 
-  // Flatten all pages into a single array
-  const opportunities = data?.pages.flatMap((page) => page.results) || [];
+  // Flatten all pages into a single array (dedupe by id)
+  const opportunities = useMemo(() => {
+    const items = data?.pages.flatMap((page) => page.results) || [];
+    const seen = new Set<number>();
+    return items.filter((item) => {
+      if (seen.has(item.id)) {
+        return false;
+      }
+      seen.add(item.id);
+      return true;
+    });
+  }, [data]);
   const totalCount = data?.pages[0]?.count || 0;
 
   // Intersection Observer for infinite scroll
@@ -332,6 +345,58 @@ export default function OpportunitiesPage() {
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                     <label className="text-sm font-semibold text-foreground whitespace-nowrap shrink-0">
+                      Status
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge
+                        variant={
+                          filters.status === "ACTIVE" ? "default" : "outline"
+                        }
+                        className="cursor-pointer hover:bg-muted"
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            status: prev.status === "ACTIVE" ? null : "ACTIVE",
+                          }))
+                        }
+                      >
+                        Active
+                      </Badge>
+                      <Badge
+                        variant={
+                          filters.status === "EXPIRED" ? "default" : "outline"
+                        }
+                        className="cursor-pointer hover:bg-muted"
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            status: prev.status === "EXPIRED" ? null : "EXPIRED",
+                          }))
+                        }
+                      >
+                        Expired
+                      </Badge>
+                      <Badge
+                        variant={
+                          filters.status === "ARCHIVED"
+                            ? "default"
+                            : "outline"
+                        }
+                        className="cursor-pointer hover:bg-muted"
+                        onClick={() =>
+                          setFilters((prev) => ({
+                            ...prev,
+                            status:
+                              prev.status === "ARCHIVED" ? null : "ARCHIVED",
+                          }))
+                        }
+                      >
+                        Archived
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <label className="text-sm font-semibold text-foreground whitespace-nowrap shrink-0">
                       Experience Level
                     </label>
                     <div className="flex flex-wrap gap-2">
@@ -404,6 +469,7 @@ export default function OpportunitiesPage() {
                           is_remote: null,
                           work_mode: null,
                           experience_level: null,
+                          status: null,
                         })
                       }
                       className="h-7 px-3 text-xs w-full sm:w-auto"
