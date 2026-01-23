@@ -31,7 +31,7 @@ export function CursorTrail() {
       particle.style.height = "4px";
       particle.style.borderRadius = "50%";
       particle.style.background = "currentColor";
-      particle.style.color = "hsl(var(--primary))";
+      particle.style.color = "#0f9b57";
       particle.style.position = "fixed";
       particle.style.pointerEvents = "none";
       particle.style.zIndex = "9999";
