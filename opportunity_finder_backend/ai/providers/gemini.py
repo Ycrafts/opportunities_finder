@@ -402,8 +402,17 @@ class GeminiAIProvider(BaseAIProvider):
                     else:
                         raise AIPermanentError(f"Gemini did not return valid JSON. Got: {text[:500]}")
 
+                if isinstance(data, list):
+                    if data and isinstance(data[0], dict):
+                        data = data[0]
+                    else:
+                        raise AITransientError(
+                            "Gemini returned a JSON list without an object; retrying extraction."
+                        )
                 if not isinstance(data, dict):
-                    raise AIPermanentError(f"Gemini returned JSON but not an object. Got: {type(data).__name__}")
+                    raise AIPermanentError(
+                        f"Gemini returned JSON but not an object. Got: {type(data).__name__}"
+                    )
 
                 # Log successful call
                 AIUsageTracker.log_call(
