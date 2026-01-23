@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from opportunities.models import Source
@@ -17,7 +18,12 @@ class Command(BaseCommand):
             type=str,
             help="Filter Sources by source_type (e.g., TELEGRAM, RSS, WEB).",
         )
-        parser.add_argument("--limit", type=int, default=50, help="Max items to fetch per source.")
+        parser.add_argument(
+            "--limit",
+            type=int,
+            default=int(getattr(settings, "INGESTION_LIMIT_PER_SOURCE", 20)),
+            help="Max items to fetch per source.",
+        )
 
     def handle(self, *args, **options):
         runner = IngestionRunner()

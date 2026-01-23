@@ -213,6 +213,9 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").strip().rstrip
 AI_PROVIDER = os.getenv("AI_PROVIDER", "stub").strip().lower()
 AI_PROVIDER_CHAIN = [p.strip().lower() for p in env_csv("AI_PROVIDER_CHAIN", default=[]) if p.strip()]
 
+# Ingestion
+INGESTION_LIMIT_PER_SOURCE = int(os.getenv("INGESTION_LIMIT_PER_SOURCE", "20"))
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Backwards compatibility
 GEMINI_API_KEYS = env_csv("GEMINI_API_KEYS", default=None)  # List of keys for rotation
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
@@ -276,7 +279,7 @@ CELERY_BEAT_SCHEDULE = {
     "ingestion-ingest-due-sources-every-5-minutes": {
         "task": "ingestion.tasks.ingest_due_sources",
         "schedule": 300.0,  # Changed from 60.0 to 300.0 (5 minutes)
-        "args": (None, 50),  # source_type=None (all), limit=50
+        "args": (None, INGESTION_LIMIT_PER_SOURCE),  # source_type=None (all), limit=env
     },
 }
 

@@ -109,6 +109,8 @@ def build_extract_prompt(*, text_en: str, source_url: str | None = None) -> str:
         "  - opportunity_type: What kind of opportunity is this? (JOB, SCHOLARSHIP, INTERNSHIP, TRAINING)\n"
         "  - employment_type: For JOBS only - how is the person employed? (FULL_TIME, PART_TIME, CONTRACT, INTERNSHIP)\n"
         "  - If opportunity_type is SCHOLARSHIP/TRAINING, set employment_type=UNKNOWN\n"
+        "- experience_level MUST be one of: UNKNOWN, STUDENT, GRADUATE, JUNIOR, MID, SENIOR.\n"
+        "  - NEVER use INTERNSHIP as experience_level (that belongs to employment_type/opportunity_type).\n"
         "- Work mode rules:\n"
         "  - If the text clearly says Remote / Work from home, set work_mode=REMOTE.\n"
         "  - If a specific city/country is mentioned (and remote is NOT mentioned), set work_mode=ONSITE.\n"

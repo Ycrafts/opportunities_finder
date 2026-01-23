@@ -1181,6 +1181,17 @@
   }
 },
 {
+  "model": "token_blacklist.outstandingtoken",
+  "pk": 1,
+  "fields": {
+    "user": 2,
+    "jti": "95538dfbe8f34b79a318dc127c7467a2",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2OTI0MDkyNiwiaWF0IjoxNzY5MTU0NTI2LCJqdGkiOiI5NTUzOGRmYmU4ZjM0Yjc5YTMxOGRjMTI3Yzc0NjdhMiIsInVzZXJfaWQiOiIyIn0.ctlf9STQhKEa61oF3tdZJW5z1ctljwxAPzbJ9c3ZWAM",
+    "created_at": "2026-01-23T07:48:46.719Z",
+    "expires_at": "2026-01-24T07:48:46Z"
+  }
+},
+{
   "model": "accounts.user",
   "pk": 1,
   "fields": {
@@ -1197,6 +1208,22 @@
   }
 },
 {
+  "model": "accounts.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$1200000$2wOmYYg4EvJwZl5VTauyVP$VC3YI0gF27/T0mwQtErnFjWOTqvJ6z20KxBEGQIgI8k=",
+    "last_login": null,
+    "is_superuser": false,
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-01-23T07:48:46.296Z",
+    "email": "yonatanassefa70@gmail.com",
+    "role": "USER",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
   "model": "opportunities.source",
   "pk": 1,
   "fields": {
@@ -1206,12 +1233,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:25.055Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 20,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:24:56.252Z",
@@ -1228,12 +1255,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:26.433Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 20,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:25:22.953Z",
@@ -1250,12 +1277,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:27.845Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 20,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:26:04.536Z",
@@ -1272,12 +1299,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:29.477Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 3,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:26:57.599Z",
@@ -1294,12 +1321,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:38.380Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 20,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:27:37.115Z",
@@ -1316,12 +1343,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:40.160Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 18,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:28:13.018Z",
@@ -1338,13 +1365,13 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:42.796Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
-    "items_updated_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 19,
+    "items_updated_total": 1,
     "last_error_message": "",
     "created_at": "2026-01-23T07:29:22.366Z",
     "updated_at": "2026-01-23T07:29:22.366Z"
@@ -1360,12 +1387,12 @@
     "enabled": true,
     "poll_interval_minutes": 10,
     "last_run_at": null,
-    "last_success_at": null,
+    "last_success_at": "2026-01-23T07:52:48.827Z",
     "last_error_at": null,
     "consecutive_failures": 0,
-    "total_runs": 0,
-    "successful_runs": 0,
-    "items_created_total": 0,
+    "total_runs": 1,
+    "successful_runs": 1,
+    "items_created_total": 10,
     "items_updated_total": 0,
     "last_error_message": "",
     "created_at": "2026-01-23T07:30:02.871Z",
@@ -1381,21 +1408,21 @@
 },
 {
   "model": "opportunities.opportunitytype",
-  "pk": 3,
+  "pk": 2,
   "fields": {
     "name": "SCHOLARSHIP"
   }
 },
 {
   "model": "opportunities.opportunitytype",
-  "pk": 4,
+  "pk": 3,
   "fields": {
     "name": "INTERNSHIP"
   }
 },
 {
   "model": "opportunities.opportunitytype",
-  "pk": 5,
+  "pk": 4,
   "fields": {
     "name": "TRAINING"
   }
@@ -1476,7 +1503,7 @@
   "model": "opportunities.domain",
   "pk": 10,
   "fields": {
-    "opportunity_type": 3,
+    "opportunity_type": 2,
     "name": "PhD"
   }
 },
@@ -1484,7 +1511,7 @@
   "model": "opportunities.domain",
   "pk": 11,
   "fields": {
-    "opportunity_type": 3,
+    "opportunity_type": 2,
     "name": "Masters"
   }
 },
@@ -1492,15 +1519,39 @@
   "model": "opportunities.domain",
   "pk": 12,
   "fields": {
-    "opportunity_type": 3,
+    "opportunity_type": 2,
     "name": "Undergraduate"
+  }
+},
+{
+  "model": "opportunities.domain",
+  "pk": 13,
+  "fields": {
+    "opportunity_type": 3,
+    "name": "NGO"
+  }
+},
+{
+  "model": "opportunities.domain",
+  "pk": 14,
+  "fields": {
+    "opportunity_type": 3,
+    "name": "Data Science"
+  }
+},
+{
+  "model": "opportunities.domain",
+  "pk": 15,
+  "fields": {
+    "opportunity_type": 3,
+    "name": "Software"
   }
 },
 {
   "model": "opportunities.domain",
   "pk": 16,
   "fields": {
-    "opportunity_type": 5,
+    "opportunity_type": 4,
     "name": "English"
   }
 },
@@ -1508,8 +1559,24 @@
   "model": "opportunities.domain",
   "pk": 17,
   "fields": {
-    "opportunity_type": 5,
+    "opportunity_type": 4,
     "name": "Business"
+  }
+},
+{
+  "model": "opportunities.domain",
+  "pk": 18,
+  "fields": {
+    "opportunity_type": 4,
+    "name": "Data Science"
+  }
+},
+{
+  "model": "opportunities.domain",
+  "pk": 19,
+  "fields": {
+    "opportunity_type": 4,
+    "name": "Software"
   }
 },
 {
@@ -1517,7 +1584,7 @@
   "pk": 1,
   "fields": {
     "domain": 1,
-    "name": "Program Assistant"
+    "name": "Program Manager"
   }
 },
 {
@@ -1525,7 +1592,7 @@
   "pk": 2,
   "fields": {
     "domain": 1,
-    "name": "Team Leader"
+    "name": "Finance Manager"
   }
 },
 {
@@ -1541,36 +1608,12 @@
   "pk": 4,
   "fields": {
     "domain": 1,
-    "name": "Finance Manager"
+    "name": "Team Leader"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 5,
-  "fields": {
-    "domain": 1,
-    "name": "Program Manager"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 6,
-  "fields": {
-    "domain": 2,
-    "name": "Investment Banking"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 7,
-  "fields": {
-    "domain": 2,
-    "name": "Financial Analysis"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 8,
   "fields": {
     "domain": 2,
     "name": "Accounting"
@@ -1578,23 +1621,23 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 9,
+  "pk": 6,
   "fields": {
-    "domain": 3,
-    "name": "Product Design"
+    "domain": 2,
+    "name": "Financial Analysis"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 10,
+  "pk": 7,
   "fields": {
-    "domain": 3,
-    "name": "Graphic Design"
+    "domain": 2,
+    "name": "Investment Banking"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 11,
+  "pk": 8,
   "fields": {
     "domain": 3,
     "name": "UI/UX Design"
@@ -1602,23 +1645,23 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 12,
+  "pk": 9,
   "fields": {
-    "domain": 4,
-    "name": "Brand Management"
+    "domain": 3,
+    "name": "Graphic Design"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 13,
+  "pk": 10,
   "fields": {
-    "domain": 4,
-    "name": "Content Marketing"
+    "domain": 3,
+    "name": "Product Design"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 14,
+  "pk": 11,
   "fields": {
     "domain": 4,
     "name": "Digital Marketing"
@@ -1626,23 +1669,23 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 15,
+  "pk": 12,
   "fields": {
-    "domain": 5,
-    "name": "Curriculum Development"
+    "domain": 4,
+    "name": "Content Marketing"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 16,
+  "pk": 13,
   "fields": {
-    "domain": 5,
-    "name": "Educational Technology"
+    "domain": 4,
+    "name": "Brand Management"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 17,
+  "pk": 14,
   "fields": {
     "domain": 5,
     "name": "Teaching"
@@ -1650,23 +1693,23 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 18,
+  "pk": 15,
   "fields": {
-    "domain": 6,
-    "name": "Healthcare Administration"
+    "domain": 5,
+    "name": "Educational Technology"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 19,
+  "pk": 16,
   "fields": {
-    "domain": 6,
-    "name": "Medical Research"
+    "domain": 5,
+    "name": "Curriculum Development"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 20,
+  "pk": 17,
   "fields": {
     "domain": 6,
     "name": "Nursing"
@@ -1674,10 +1717,34 @@
 },
 {
   "model": "opportunities.specialization",
+  "pk": 18,
+  "fields": {
+    "domain": 6,
+    "name": "Medical Research"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 19,
+  "fields": {
+    "domain": 6,
+    "name": "Healthcare Administration"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 20,
+  "fields": {
+    "domain": 7,
+    "name": "Mechanical"
+  }
+},
+{
+  "model": "opportunities.specialization",
   "pk": 21,
   "fields": {
     "domain": 7,
-    "name": "Chemical"
+    "name": "Electrical"
   }
 },
 {
@@ -1693,15 +1760,15 @@
   "pk": 23,
   "fields": {
     "domain": 7,
-    "name": "Electrical"
+    "name": "Chemical"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 24,
   "fields": {
-    "domain": 7,
-    "name": "Mechanical"
+    "domain": 8,
+    "name": "Data Analysis"
   }
 },
 {
@@ -1709,7 +1776,7 @@
   "pk": 25,
   "fields": {
     "domain": 8,
-    "name": "Data Analytics"
+    "name": "Data Engineering"
   }
 },
 {
@@ -1717,7 +1784,7 @@
   "pk": 26,
   "fields": {
     "domain": 8,
-    "name": "Data Analysis"
+    "name": "Business Intelligence"
   }
 },
 {
@@ -1732,37 +1799,13 @@
   "model": "opportunities.specialization",
   "pk": 28,
   "fields": {
-    "domain": 8,
-    "name": "Business Intelligence"
+    "domain": 9,
+    "name": "Backend"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 29,
-  "fields": {
-    "domain": 8,
-    "name": "Data Engineering"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 31,
-  "fields": {
-    "domain": 9,
-    "name": "Web Development"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 32,
-  "fields": {
-    "domain": 9,
-    "name": "Full Stack"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 33,
   "fields": {
     "domain": 9,
     "name": "Frontend"
@@ -1770,23 +1813,23 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 34,
+  "pk": 30,
   "fields": {
     "domain": 9,
-    "name": "Backend"
+    "name": "Full Stack"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 35,
+  "pk": 31,
   "fields": {
     "domain": 9,
-    "name": "Machine Learning"
+    "name": "DevOps"
   }
 },
 {
   "model": "opportunities.specialization",
-  "pk": 36,
+  "pk": 32,
   "fields": {
     "domain": 9,
     "name": "Mobile App"
@@ -1794,10 +1837,66 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 37,
+  "pk": 33,
   "fields": {
     "domain": 9,
-    "name": "DevOps"
+    "name": "Machine Learning"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 34,
+  "fields": {
+    "domain": 10,
+    "name": "Computer Science"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 35,
+  "fields": {
+    "domain": 10,
+    "name": "Engineering"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 36,
+  "fields": {
+    "domain": 10,
+    "name": "Business"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 37,
+  "fields": {
+    "domain": 10,
+    "name": "Public Health"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 38,
+  "fields": {
+    "domain": 10,
+    "name": "Data Science"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 39,
+  "fields": {
+    "domain": 10,
+    "name": "Social Work"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 40,
+  "fields": {
+    "domain": 10,
+    "name": "Sociology"
   }
 },
 {
@@ -1812,31 +1911,31 @@
   "model": "opportunities.specialization",
   "pk": 42,
   "fields": {
-    "domain": 10,
-    "name": "Sociology"
+    "domain": 11,
+    "name": "Computer Science"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 43,
   "fields": {
-    "domain": 10,
-    "name": "Social Work"
+    "domain": 11,
+    "name": "Engineering"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 44,
   "fields": {
-    "domain": 10,
-    "name": "Data Science"
+    "domain": 11,
+    "name": "Business"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 45,
   "fields": {
-    "domain": 10,
+    "domain": 11,
     "name": "Public Health"
   }
 },
@@ -1844,24 +1943,24 @@
   "model": "opportunities.specialization",
   "pk": 46,
   "fields": {
-    "domain": 10,
-    "name": "Business"
+    "domain": 11,
+    "name": "Data Science"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 47,
   "fields": {
-    "domain": 10,
-    "name": "Engineering"
+    "domain": 11,
+    "name": "Social Work"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 48,
   "fields": {
-    "domain": 10,
-    "name": "Computer Science"
+    "domain": 11,
+    "name": "Sociology"
   }
 },
 {
@@ -1876,31 +1975,31 @@
   "model": "opportunities.specialization",
   "pk": 50,
   "fields": {
-    "domain": 11,
-    "name": "Sociology"
+    "domain": 12,
+    "name": "Computer Science"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 51,
   "fields": {
-    "domain": 11,
-    "name": "Social Work"
+    "domain": 12,
+    "name": "Engineering"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 52,
   "fields": {
-    "domain": 11,
-    "name": "Data Science"
+    "domain": 12,
+    "name": "Business"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 53,
   "fields": {
-    "domain": 11,
+    "domain": 12,
     "name": "Public Health"
   }
 },
@@ -1908,24 +2007,24 @@
   "model": "opportunities.specialization",
   "pk": 54,
   "fields": {
-    "domain": 11,
-    "name": "Business"
+    "domain": 12,
+    "name": "Data Science"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 55,
   "fields": {
-    "domain": 11,
-    "name": "Engineering"
+    "domain": 12,
+    "name": "Social Work"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 56,
   "fields": {
-    "domain": 11,
-    "name": "Computer Science"
+    "domain": 12,
+    "name": "Sociology"
   }
 },
 {
@@ -1940,61 +2039,45 @@
   "model": "opportunities.specialization",
   "pk": 58,
   "fields": {
-    "domain": 12,
-    "name": "Sociology"
+    "domain": 13,
+    "name": "Program Assistant"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 59,
   "fields": {
-    "domain": 12,
-    "name": "Social Work"
+    "domain": 14,
+    "name": "Data Analysis"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 60,
   "fields": {
-    "domain": 12,
-    "name": "Data Science"
+    "domain": 15,
+    "name": "Backend"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 61,
   "fields": {
-    "domain": 12,
-    "name": "Public Health"
+    "domain": 15,
+    "name": "Frontend"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 62,
   "fields": {
-    "domain": 12,
-    "name": "Business"
+    "domain": 15,
+    "name": "Full Stack"
   }
 },
 {
   "model": "opportunities.specialization",
   "pk": 63,
-  "fields": {
-    "domain": 12,
-    "name": "Engineering"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 64,
-  "fields": {
-    "domain": 12,
-    "name": "Computer Science"
-  }
-},
-{
-  "model": "opportunities.specialization",
-  "pk": 65,
   "fields": {
     "domain": 16,
     "name": "Professional English"
@@ -2002,10 +2085,26 @@
 },
 {
   "model": "opportunities.specialization",
-  "pk": 66,
+  "pk": 64,
   "fields": {
     "domain": 17,
     "name": "Project Management"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 65,
+  "fields": {
+    "domain": 18,
+    "name": "Data Analytics"
+  }
+},
+{
+  "model": "opportunities.specialization",
+  "pk": 66,
+  "fields": {
+    "domain": 19,
+    "name": "Web Development"
   }
 },
 {
@@ -2190,6 +2289,38 @@
   "fields": {
     "name": "Yeka",
     "parent": 2
+  }
+},
+{
+  "model": "configs.matchconfig",
+  "pk": 1,
+  "fields": {
+    "user": 2,
+    "threshold_score": 7.0,
+    "notification_frequency": "INSTANT",
+    "notify_via_telegram": true,
+    "notify_via_email": false,
+    "notify_via_web_push": false,
+    "telegram_frequency": null,
+    "email_frequency": null,
+    "web_push_frequency": null,
+    "max_alerts_per_day": null,
+    "quiet_hours_start": null,
+    "quiet_hours_end": null,
+    "work_mode": "ANY",
+    "employment_type": "ANY",
+    "experience_level": "ANY",
+    "min_compensation": null,
+    "max_compensation": null,
+    "deadline_after": null,
+    "deadline_before": null,
+    "created_at": "2026-01-23T07:50:03.037Z",
+    "updated_at": "2026-01-23T07:50:03.037Z",
+    "preferred_opportunity_types": [],
+    "muted_opportunity_types": [],
+    "preferred_domains": [],
+    "preferred_specializations": [],
+    "preferred_locations": []
   }
 },
 {

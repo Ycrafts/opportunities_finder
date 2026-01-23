@@ -187,7 +187,13 @@ class Domain(models.Model):
     opportunity_type = models.ForeignKey(
         OpportunityType, on_delete=models.PROTECT, related_name="domains"
     )
-    name = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ("opportunity_type", "name")
+        indexes = [
+            models.Index(fields=["opportunity_type", "name"]),
+        ]
 
     def __str__(self) -> str:
         return self.name

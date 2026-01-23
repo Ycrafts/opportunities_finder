@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from celery import shared_task
+from django.conf import settings
 
 from opportunities.models import Source
 
@@ -10,7 +11,9 @@ from ingestion.services.runner import IngestionRunner
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})
-def ingest_source(self, source_id: int, limit: int = 50) -> dict:
+def ingest_source(self, source_id: int, limit: int | None = None) -> dict:
+    if limit is None:
+        limit = int(getattr(settings, "INGESTION_LIMIT_PER_SOURCE", 20))
     runner = IngestionRunner()
     source = Source.objects.get(id=source_id, enabled=True)
     res = runner.run_source(source=source, limit=limit)
@@ -18,7 +21,9 @@ def ingest_source(self, source_id: int, limit: int = 50) -> dict:
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
-def ingest_all(self, source_type: str | None = None, limit: int = 50) -> dict:
+def ingest_all(self, source_type: str | None = None, limit: int | None = None) -> dict:
+    if limit is None:
+        limit = int(getattr(settings, "INGESTION_LIMIT_PER_SOURCE", 20))
     runner = IngestionRunner()
     summary = runner.run_all(source_type=source_type, limit=limit)
     return {
@@ -29,7 +34,9 @@ def ingest_all(self, source_type: str | None = None, limit: int = 50) -> dict:
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
-def ingest_due_sources(self, source_type: str | None = None, limit: int = 50) -> dict:
+def ingest_due_sources(self, source_type: str | None = None, limit: int | None = None) -> dict:
+    if limit is None:
+        limit = int(getattr(settings, "INGESTION_LIMIT_PER_SOURCE", 20))
     """
     Periodic scheduler task:
       - checks which enabled Sources are "due" based on poll_interval_minutes and last_run_at
