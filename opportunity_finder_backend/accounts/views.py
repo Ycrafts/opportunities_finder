@@ -135,7 +135,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
             frontend_url = getattr(settings, "FRONTEND_URL", "http://localhost:3000").rstrip("/")
             reset_link = f"{frontend_url}/reset-password?uid={uid}&token={token}"
 
-            subject = "Reset your Opportunity Finder password"
+            subject = "Reset your Findra password"
             message = (
                 "We received a request to reset your password.\n\n"
                 f"Reset link: {reset_link}\n\n"
@@ -154,7 +154,7 @@ class PasswordResetRequestView(generics.GenericAPIView):
                     send_mail(
                         subject=subject,
                         message=message,
-                        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@opportunityfinder.com"),
+                        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@findra.com"),
                         recipient_list=[user.email],
                         fail_silently=False,
                     )
