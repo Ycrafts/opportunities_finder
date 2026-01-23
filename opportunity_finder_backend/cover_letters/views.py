@@ -63,6 +63,20 @@ class CoverLetterGenerateView(generics.CreateAPIView):
 
         opportunity_id = serializer.validated_data["opportunity_id"]
         user = request.user
+        if getattr(user, "subscription_level", "STANDARD") != "PREMIUM":
+            daily_generations = CoverLetter.objects.filter(
+                user=user,
+                created_at__gte=timezone.now() - timedelta(days=1)
+            ).count()
+            if daily_generations >= 1:
+                return Response(
+                    {
+                        "error": "Daily cover letter limit reached. Upgrade to Premium to generate more.",
+                        "code": "premium_required",
+                        "upgrade_url": "/dashboard/upgrade",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Get user profile
         try:
@@ -96,6 +110,21 @@ class CoverLetterGenerateView(generics.CreateAPIView):
                 {"error": "A cover letter is already being generated for this opportunity. Please wait for it to complete."},
                 status=status.HTTP_409_CONFLICT
             )
+
+        if getattr(request.user, "subscription_level", "STANDARD") != "PREMIUM":
+            daily_generations = CoverLetter.objects.filter(
+                user=request.user,
+                created_at__gte=timezone.now() - timedelta(days=1)
+            ).count()
+            if daily_generations >= 1:
+                return Response(
+                    {
+                        "error": "Daily cover letter limit reached. Upgrade to Premium to generate more.",
+                        "code": "premium_required",
+                        "upgrade_url": "/dashboard/upgrade",
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
         # Rate limiting: Check if user has generated too many letters recently
         recent_generations = CoverLetter.objects.filter(

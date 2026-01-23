@@ -274,11 +274,16 @@ export default function OpportunityDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["cover-letters"] });
     },
     onError: (error: any) => {
+      const code = error?.response?.data?.code;
+      const upgradeUrl = error?.response?.data?.upgrade_url;
       const message =
         error?.response?.data?.error ||
         error?.response?.data?.detail ||
         "Failed to generate cover letter.";
       toast.error(message);
+      if (code === "premium_required" && upgradeUrl) {
+        router.push(upgradeUrl);
+      }
     },
   });
 

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
+from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, permissions, status
@@ -22,7 +23,11 @@ from .serializers import (
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     RegisterSerializer,
+    SubscriptionUpgradeRequestCreateSerializer,
+    SubscriptionUpgradeRequestReviewSerializer,
+    SubscriptionUpgradeRequestSerializer,
 )
+from .models import SubscriptionLevel, SubscriptionUpgradeRequest
 from notifications.providers.brevo import get_brevo_client
 
 logger = logging.getLogger(__name__)
@@ -97,6 +102,53 @@ class LogoutView(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class SubscriptionUpgradeRequestListCreateView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SubscriptionUpgradeRequest.objects.filter(user=self.request.user)
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return SubscriptionUpgradeRequestCreateSerializer
+        return SubscriptionUpgradeRequestSerializer
+
+    def create(self, request, *args, **kwargs):
+        if SubscriptionUpgradeRequest.objects.filter(
+            user=request.user,
+            status=SubscriptionUpgradeRequest.Status.PENDING,
+        ).exists():
+            return Response(
+                {"error": "You already have a pending upgrade request."},
+                status=status.HTTP_409_CONFLICT,
+            )
+        return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SubscriptionUpgradeRequestAdminListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = SubscriptionUpgradeRequestSerializer
+    queryset = SubscriptionUpgradeRequest.objects.select_related("user")
+
+
+class SubscriptionUpgradeRequestReviewView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = SubscriptionUpgradeRequestReviewSerializer
+    queryset = SubscriptionUpgradeRequest.objects.select_related("user")
+
+    def perform_update(self, serializer):
+        upgrade_request = serializer.save(
+            reviewed_by=self.request.user,
+            reviewed_at=timezone.now(),
+        )
+        if upgrade_request.status == SubscriptionUpgradeRequest.Status.APPROVED:
+            upgrade_request.user.subscription_level = SubscriptionLevel.PREMIUM
+            upgrade_request.user.save(update_fields=["subscription_level"])
 
 
 class LogoutAllView(generics.GenericAPIView):

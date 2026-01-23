@@ -11,6 +11,9 @@ from .views import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
     RegisterView,
+    SubscriptionUpgradeRequestAdminListView,
+    SubscriptionUpgradeRequestListCreateView,
+    SubscriptionUpgradeRequestReviewView,
 )
 
 
@@ -25,6 +28,9 @@ urlpatterns = [
     path("password/reset/", PasswordResetRequestView.as_view(), name="password_reset"),
     path("password/reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
     path("account/delete/", DeleteAccountView.as_view(), name="account_delete"),
+    path("subscription/requests/", SubscriptionUpgradeRequestListCreateView.as_view(), name="subscription_requests"),
+    path("subscription/requests/admin/", SubscriptionUpgradeRequestAdminListView.as_view(), name="subscription_requests_admin"),
+    path("subscription/requests/<int:pk>/review/", SubscriptionUpgradeRequestReviewView.as_view(), name="subscription_requests_review"),
 ]
 
 

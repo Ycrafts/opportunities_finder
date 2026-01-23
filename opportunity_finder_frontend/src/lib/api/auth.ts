@@ -48,6 +48,23 @@ export interface User {
   email: string;
   is_active: boolean;
   role: string;
+  subscription_level: "STANDARD" | "PREMIUM";
+}
+
+export interface SubscriptionUpgradeRequest {
+  id: number;
+  status: "PENDING" | "APPROVED" | "REJECTED";
+  payment_method: string;
+  receipt: string;
+  note: string;
+  admin_note: string;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export interface SubscriptionUpgradeCreateRequest {
+  receipt?: File | null;
+  note?: string;
 }
 
 export interface ApiError {
@@ -105,6 +122,30 @@ export const authApi = {
 
   async confirmPasswordReset(data: PasswordResetConfirmRequest): Promise<void> {
     await apiClient.post("/auth/password/reset/confirm/", data);
+  },
+
+  async getSubscriptionUpgradeRequests(): Promise<SubscriptionUpgradeRequest[]> {
+    const response = await apiClient.get<{ results: SubscriptionUpgradeRequest[] }>(
+      "/auth/subscription/requests/"
+    );
+    return response.data.results ?? [];
+  },
+
+  async createSubscriptionUpgradeRequest(
+    data: SubscriptionUpgradeCreateRequest
+  ): Promise<SubscriptionUpgradeRequest> {
+    const formData = new FormData();
+    if (data.note) {
+      formData.append("note", data.note);
+    }
+    if (data.receipt) {
+      formData.append("receipt", data.receipt);
+    }
+    const response = await apiClient.post<SubscriptionUpgradeRequest>(
+      "/auth/subscription/requests/",
+      formData
+    );
+    return response.data;
   },
 
   extractError(error: unknown): ApiError {

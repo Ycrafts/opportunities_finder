@@ -1,0 +1,21 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ("accounts", "0002_user_role"),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name="user",
+            name="subscription_level",
+            field=models.CharField(
+                choices=[("STANDARD", "Standard"), ("PREMIUM", "Premium")],
+                default="STANDARD",
+                help_text="Subscription tier for access control",
+                max_length=20,
+            ),
+        ),
+    ]

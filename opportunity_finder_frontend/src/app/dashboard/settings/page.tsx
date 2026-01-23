@@ -14,6 +14,7 @@ import {
   LogOut,
   KeyRound,
   ShieldAlert,
+  Crown,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ const navItems = [
   { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
   { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 export default function SettingsPage() {
@@ -119,6 +121,30 @@ export default function SettingsPage() {
             </p>
           </div>
         </FadeIn>
+
+        {user?.subscription_level !== "PREMIUM" && (
+          <FadeIn delay={0.05}>
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Crown className="h-4 w-4" />
+                  Upgrade to Premium
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  Unlock unlimited cover letters and premium features.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  Submit payment proof to request an upgrade.
+                </p>
+                <Button onClick={() => router.push("/dashboard/upgrade")}>
+                  Request upgrade
+                </Button>
+              </CardContent>
+            </Card>
+          </FadeIn>
+        )}
 
         <FadeIn delay={0.1}>
           <Card className="border-border/60">

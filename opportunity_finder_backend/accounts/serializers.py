@@ -5,6 +5,9 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
+from .models import SubscriptionUpgradeRequest
+
+
 User = get_user_model()
 
 
@@ -64,8 +67,46 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "email", "is_active", "role")
+        fields = ("id", "email", "is_active", "role", "subscription_level")
         read_only_fields = fields
+
+
+class SubscriptionUpgradeRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionUpgradeRequest
+        fields = (
+            "id",
+            "status",
+            "payment_method",
+            "receipt",
+            "note",
+            "admin_note",
+            "reviewed_at",
+            "created_at",
+        )
+        read_only_fields = ("id", "status", "admin_note", "reviewed_at", "created_at")
+
+
+class SubscriptionUpgradeRequestCreateSerializer(serializers.ModelSerializer):
+    payment_method = serializers.CharField(required=False, default="Telebirr")
+
+    class Meta:
+        model = SubscriptionUpgradeRequest
+        fields = ("payment_method", "receipt", "note")
+
+
+class SubscriptionUpgradeRequestReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SubscriptionUpgradeRequest
+        fields = ("status", "admin_note")
+
+    def validate_status(self, value):
+        if value not in [
+            SubscriptionUpgradeRequest.Status.APPROVED,
+            SubscriptionUpgradeRequest.Status.REJECTED,
+        ]:
+            raise serializers.ValidationError("Status must be APPROVED or REJECTED.")
+        return value
 
 
 class LogoutSerializer(serializers.Serializer):

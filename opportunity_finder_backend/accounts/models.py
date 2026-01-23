@@ -43,6 +43,11 @@ class UserRole(models.TextChoices):
     SUPPORT = "SUPPORT", "Support"
 
 
+class SubscriptionLevel(models.TextChoices):
+    STANDARD = "STANDARD", "Standard"
+    PREMIUM = "PREMIUM", "Premium"
+
+
 class User(AbstractUser):
     """
     Email-first user model.
@@ -59,6 +64,12 @@ class User(AbstractUser):
         choices=UserRole.choices,
         default=UserRole.USER,
         help_text="User role for access control",
+    )
+    subscription_level = models.CharField(
+        max_length=20,
+        choices=SubscriptionLevel.choices,
+        default=SubscriptionLevel.STANDARD,
+        help_text="Subscription tier for access control",
     )
 
     USERNAME_FIELD = "email"
@@ -78,3 +89,41 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return self.email
+
+
+class SubscriptionUpgradeRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="subscription_requests",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    payment_method = models.CharField(max_length=50, default="Telebirr")
+    receipt = models.FileField(upload_to="subscription_receipts/", blank=True)
+    note = models.TextField(blank=True, default="")
+    admin_note = models.TextField(blank=True, default="")
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_subscription_requests",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"SubscriptionUpgradeRequest<{self.user_id}:{self.status}>"
