@@ -39,6 +39,28 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    new_password2 = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        if attrs.get("new_password") != attrs.get("new_password2"):
+            raise serializers.ValidationError({"new_password2": "Passwords do not match."})
+
+        try:
+            validate_password(password=attrs.get("new_password"))
+        except DjangoValidationError as e:
+            raise serializers.ValidationError({"new_password": list(e.messages)})
+
+        return attrs
+
+
 class MeSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

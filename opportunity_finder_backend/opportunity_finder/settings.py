@@ -206,6 +206,9 @@ BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
 BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Opportunity Finder")
 
+# Frontend URL (for password reset links)
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")
+
 # AI (provider router)
 AI_PROVIDER = os.getenv("AI_PROVIDER", "stub").strip().lower()
 AI_PROVIDER_CHAIN = [p.strip().lower() for p in env_csv("AI_PROVIDER_CHAIN", default=[]) if p.strip()]

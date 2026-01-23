@@ -6,7 +6,7 @@ const getApiBaseUrl = (): string => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
-  
+
   // In browser, detect the current host and use it for backend
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
@@ -17,7 +17,7 @@ const getApiBaseUrl = (): string => {
     // Otherwise, use the same host with port 8000
     return `http://${host}:8000`;
   }
-  
+
   // Server-side fallback
   return "http://localhost:8000";
 };
@@ -40,12 +40,12 @@ apiClient.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
-    
+
     // If data is FormData, remove Content-Type header to let browser set it with boundary
     if (config.data instanceof FormData) {
       delete config.headers["Content-Type"];
     }
-    
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -58,9 +58,9 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as any;
 
     // Don't try to refresh token for auth endpoints (login, register, refresh)
-    const isAuthEndpoint = originalRequest?.url?.includes("/auth/token/") || 
-                           originalRequest?.url?.includes("/auth/register/") ||
-                           originalRequest?.url?.includes("/auth/token/refresh/");
+    const isAuthEndpoint = originalRequest?.url?.includes("/auth/token/") ||
+      originalRequest?.url?.includes("/auth/register/") ||
+      originalRequest?.url?.includes("/auth/token/refresh/");
 
     if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;

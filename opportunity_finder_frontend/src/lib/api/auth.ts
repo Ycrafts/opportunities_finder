@@ -32,6 +32,17 @@ export interface DeleteAccountRequest {
   confirm: string;
 }
 
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  uid: string;
+  token: string;
+  new_password: string;
+  new_password2: string;
+}
+
 export interface User {
   id: number;
   email: string;
@@ -44,6 +55,7 @@ export interface ApiError {
   email?: string[];
   password?: string[];
   password2?: string[];
+  new_password?: string[];
   non_field_errors?: string[];
   [key: string]: any;
 }
@@ -85,6 +97,14 @@ export const authApi = {
 
   async deleteAccount(data: DeleteAccountRequest): Promise<void> {
     await apiClient.post("/auth/account/delete/", data);
+  },
+
+  async requestPasswordReset(data: PasswordResetRequest): Promise<void> {
+    await apiClient.post("/auth/password/reset/", data);
+  },
+
+  async confirmPasswordReset(data: PasswordResetConfirmRequest): Promise<void> {
+    await apiClient.post("/auth/password/reset/confirm/", data);
   },
 
   extractError(error: unknown): ApiError {

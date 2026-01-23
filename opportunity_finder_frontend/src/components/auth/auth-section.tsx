@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -246,6 +247,11 @@ export function AuthSection({ defaultMode = "login" }: AuthSectionProps) {
                       >
                         {isSubmitting ? "Logging in..." : "Login"}
                       </Button>
+                      <div className="text-center text-sm text-muted-foreground">
+                        <Link href="/forgot-password" className="hover:text-foreground">
+                          Forgot password?
+                        </Link>
+                      </div>
                     </form>
                   </Form>
                 </motion.div>
