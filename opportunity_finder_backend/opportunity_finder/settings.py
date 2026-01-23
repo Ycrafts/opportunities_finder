@@ -278,6 +278,11 @@ MATCHING_BATCH_SIZE = int(os.getenv("MATCHING_BATCH_SIZE", "1"))  # Opportunitie
 # Separate rate limit for matching AI calls (cost control)
 MATCHING_AI_RATE_LIMIT = os.getenv("MATCHING_AI_RATE_LIMIT", "1/h").strip()
 
+# Backfill matching (new users)
+MATCHING_BACKFILL_DAYS = int(os.getenv("MATCHING_BACKFILL_DAYS", "5"))
+MATCHING_BACKFILL_MAX_CANDIDATES = int(os.getenv("MATCHING_BACKFILL_MAX_CANDIDATES", "50"))
+MATCHING_BACKFILL_MAX_AI = int(os.getenv("MATCHING_BACKFILL_MAX_AI", "10"))
+
 CELERY_BEAT_SCHEDULE = {
     "ingestion-ingest-due-sources-every-5-minutes": {
         "task": "ingestion.tasks.ingest_due_sources",
@@ -320,6 +325,7 @@ CELERY_TASK_ANNOTATIONS = {
     "matching.tasks.match_opportunity_to_users": {"rate_limit": MATCHING_AI_RATE_LIMIT},
     "matching.tasks.match_single_user_opportunity": {"rate_limit": MATCHING_AI_RATE_LIMIT},
     "matching.tasks.match_pending_opportunities": {"rate_limit": MATCHING_AI_RATE_LIMIT},
+    "matching.tasks.backfill_recent_opportunities_for_user": {"rate_limit": MATCHING_AI_RATE_LIMIT},
     # Cover letter generation (higher priority, user-facing)
     "cover_letters.tasks.generate_cover_letter_task": {"rate_limit": "10/m"},  # 10 per minute, higher than matching
     # CV extraction (higher priority, user-facing)

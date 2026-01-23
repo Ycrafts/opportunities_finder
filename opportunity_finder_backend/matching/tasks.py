@@ -6,6 +6,8 @@ from celery import shared_task
 
 from django.utils import timezone
 
+from django.conf import settings
+
 from opportunities.models import Opportunity
 
 from .services.matcher import OpportunityMatcher
@@ -112,3 +114,26 @@ def match_pending_opportunities(self, hours_back: int = 24, batch_size: int = 1)
         "batch_size": batch_size,
         "note": "Batched matching tasks queued asynchronously"
     }
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 3})
+def backfill_recent_opportunities_for_user(
+    self,
+    user_id: int,
+    days_back: int | None = None,
+    max_candidates: int | None = None,
+    max_ai: int | None = None,
+) -> dict:
+    """
+    Backfill matching for a single user against recent opportunities.
+
+    Uses stage-1 SQL filtering to select candidates, then applies AI
+    matching only to a capped subset.
+    """
+    matcher = OpportunityMatcher()
+    return matcher.match_recent_opportunities_for_user(
+        user_id=user_id,
+        days_back=days_back or settings.MATCHING_BACKFILL_DAYS,
+        max_candidates=max_candidates or settings.MATCHING_BACKFILL_MAX_CANDIDATES,
+        max_ai=max_ai or settings.MATCHING_BACKFILL_MAX_AI,
+    )

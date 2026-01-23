@@ -4,6 +4,8 @@ from typing import Any
 
 from django.db import transaction
 from django.db.models import Q
+from datetime import timedelta
+from django.utils import timezone
 
 from ai.errors import AIError, AITransientError, AIPermanentError
 from ai.router import get_provider_by_name, get_provider_chain_names
@@ -327,6 +329,137 @@ class OpportunityMatcher:
             "match_score": 5.0,  # Neutral fallback score
             "justification": f"Unable to perform AI matching - {error_msg}",
             "stage2_score": None,  # Indicate AI failure
+        }
+
+    def match_recent_opportunities_for_user(
+        self,
+        *,
+        user_id: int,
+        days_back: int = 5,
+        max_candidates: int = 50,
+        max_ai: int = 10,
+    ) -> dict[str, Any]:
+        """
+        Backfill matching for a single user against recent opportunities.
+
+        Applies SQL pre-filtering to gather candidates, then runs AI
+        matching for only the top N candidates.
+        """
+        try:
+            user_profile = UserProfile.objects.select_related(
+                "user", "user__match_config"
+            ).get(user_id=user_id)
+        except UserProfile.DoesNotExist:
+            return {"error": f"UserProfile for user {user_id} not found"}
+
+        config = getattr(user_profile.user, "match_config", None)
+        if not config:
+            return {"error": f"MatchConfig for user {user_id} not found"}
+
+        cutoff_time = timezone.now() - timedelta(days=days_back)
+
+        filters = Q(status=Opportunity.Status.ACTIVE) & Q(created_at__gte=cutoff_time)
+
+        # Opportunity Type preferences
+        if config.preferred_opportunity_types.exists():
+            preferred_types = list(config.preferred_opportunity_types.values_list("id", flat=True))
+            filters &= Q(op_type_id__in=preferred_types)
+        elif config.muted_opportunity_types.exists():
+            muted_types = list(config.muted_opportunity_types.values_list("id", flat=True))
+            filters &= ~Q(op_type_id__in=muted_types)
+
+        # Domain preferences
+        if config.preferred_domains.exists():
+            preferred_domains = list(config.preferred_domains.values_list("id", flat=True))
+            filters &= Q(domain_id__in=preferred_domains)
+
+        # Specialization preferences
+        if config.preferred_specializations.exists():
+            preferred_specs = list(config.preferred_specializations.values_list("id", flat=True))
+            filters &= Q(specialization_id__in=preferred_specs)
+
+        # Location preferences (ignore for scholarships)
+        if config.preferred_locations.exists():
+            preferred_location_ids = set()
+            for location in config.preferred_locations.all():
+                preferred_location_ids.update(location.descendants(include_self=True))
+            filters &= (Q(op_type__name="SCHOLARSHIP") | Q(location_id__in=preferred_location_ids))
+
+        # Work mode preferences
+        if config.work_mode != MatchConfig.WorkMode.ANY:
+            if config.work_mode == MatchConfig.WorkMode.REMOTE:
+                filters &= Q(work_mode=Opportunity.WorkMode.REMOTE)
+            elif config.work_mode == MatchConfig.WorkMode.ONSITE:
+                filters &= Q(work_mode=Opportunity.WorkMode.ONSITE)
+            elif config.work_mode == MatchConfig.WorkMode.HYBRID:
+                filters &= Q(work_mode=Opportunity.WorkMode.HYBRID)
+
+        # Employment type preferences
+        if config.employment_type != MatchConfig.EmploymentType.ANY:
+            if config.employment_type == MatchConfig.EmploymentType.FULL_TIME:
+                filters &= Q(employment_type=Opportunity.EmploymentType.FULL_TIME)
+            elif config.employment_type == MatchConfig.EmploymentType.PART_TIME:
+                filters &= Q(employment_type=Opportunity.EmploymentType.PART_TIME)
+            elif config.employment_type == MatchConfig.EmploymentType.CONTRACT:
+                filters &= Q(employment_type=Opportunity.EmploymentType.CONTRACT)
+            elif config.employment_type == MatchConfig.EmploymentType.INTERNSHIP:
+                filters &= Q(employment_type=Opportunity.EmploymentType.INTERNSHIP)
+
+        # Experience level preferences
+        if config.experience_level != MatchConfig.ExperienceLevel.ANY:
+            if config.experience_level == MatchConfig.ExperienceLevel.STUDENT:
+                filters &= Q(experience_level=Opportunity.ExperienceLevel.STUDENT)
+            elif config.experience_level == MatchConfig.ExperienceLevel.GRADUATE:
+                filters &= Q(experience_level=Opportunity.ExperienceLevel.GRADUATE)
+            elif config.experience_level == MatchConfig.ExperienceLevel.JUNIOR:
+                filters &= Q(experience_level=Opportunity.ExperienceLevel.JUNIOR)
+            elif config.experience_level == MatchConfig.ExperienceLevel.MID:
+                filters &= Q(experience_level=Opportunity.ExperienceLevel.MID)
+            elif config.experience_level == MatchConfig.ExperienceLevel.SENIOR:
+                filters &= Q(experience_level=Opportunity.ExperienceLevel.SENIOR)
+
+        # Compensation preferences (salary range)
+        if config.min_compensation is not None:
+            filters &= Q(max_compensation__gte=config.min_compensation)
+        if config.max_compensation is not None:
+            filters &= Q(min_compensation__lte=config.max_compensation)
+
+        # Deadline window preferences
+        if config.deadline_after:
+            filters &= Q(deadline__gte=config.deadline_after)
+        if config.deadline_before:
+            filters &= Q(deadline__lte=config.deadline_before)
+
+        candidates = list(
+            Opportunity.objects.filter(filters)
+            .order_by("-published_at", "-created_at")[: max_candidates or 0]
+        )
+
+        matches_created = 0
+        ai_attempts = 0
+
+        for opportunity in candidates[: max_ai or 0]:
+            if Match.objects.filter(user_id=user_id, opportunity_id=opportunity.id).exists():
+                continue
+
+            match_result = self._stage2_ai_rerank(opportunity, user_profile, [opportunity])
+            ai_attempts += 1
+            if match_result and match_result["match_score"] >= self.min_match_score:
+                self._create_match_record(
+                    user_profile.user,
+                    opportunity,
+                    match_result["match_score"],
+                    match_result["justification"],
+                    match_result.get("stage2_score"),
+                )
+                matches_created += 1
+
+        return {
+            "user_id": user_id,
+            "days_back": days_back,
+            "candidates_considered": len(candidates),
+            "ai_attempts": ai_attempts,
+            "matches_created": matches_created,
         }
 
     def _build_matching_prompt(self, opportunity: Opportunity, user_profile: UserProfile) -> str:

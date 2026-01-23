@@ -184,6 +184,9 @@ Return the extracted information in the specified JSON format."""
             with session.cv_file.open('rb') as f:
                 extracted_text = self.extract_text_from_file(f)
 
+            if extracted_text:
+                extracted_text = extracted_text.replace("\x00", "")
+
             session.extracted_text = extracted_text
             session.status = CVExtractionSession.Status.EXTRACTING
             session.save()

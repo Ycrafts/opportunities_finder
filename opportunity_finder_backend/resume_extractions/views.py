@@ -163,6 +163,8 @@ class ApplyExtractionToProfileView(generics.UpdateAPIView):
         from profiles.models import UserProfile
         profile, created = UserProfile.objects.get_or_create(user=request.user)
 
+        was_ready = bool((profile.matching_profile_text or "").strip())
+
         # Apply extracted data to profile
         extracted_data = session.get_extracted_profile_data()
 
@@ -179,6 +181,17 @@ class ApplyExtractionToProfileView(generics.UpdateAPIView):
             profile.cv_file = session.cv_file
 
         profile.save()
+
+        is_ready = bool((profile.matching_profile_text or "").strip())
+        if is_ready and not was_ready:
+            from matching.models import Match
+            from matching.tasks import backfill_recent_opportunities_for_user
+
+            if not Match.objects.filter(user=profile.user).exists():
+                backfill_recent_opportunities_for_user.apply_async(
+                    args=[profile.user_id],
+                    countdown=30,
+                )
 
         return Response({
             "message": "CV data successfully applied to profile",

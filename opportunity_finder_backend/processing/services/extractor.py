@@ -592,10 +592,14 @@ class RawOpportunityExtractor:
                     parent_field = f"{parent_model.__name__.lower()}_id"
                     if hasattr(instance, parent_field):
                         if getattr(instance, parent_field) != parent_instance.id:
-                            raise AIPermanentError(
-                                f"Invalid taxonomy: {field_name} does not belong to parent {parent_model.__name__}."
-                            )
-                return instance
+                            if name_value:
+                                instance = None
+                            else:
+                                raise AIPermanentError(
+                                    f"Invalid taxonomy: {field_name} does not belong to parent {parent_model.__name__}."
+                                )
+                if instance is not None:
+                    return instance
             except (ValueError, model_class.DoesNotExist):
                 # ID lookup failed; fall through to name matching
                 pass
