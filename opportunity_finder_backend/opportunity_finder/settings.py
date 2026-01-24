@@ -187,8 +187,8 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Opportunity Finder API",
-    "DESCRIPTION": "Backend API for Opportunity Finder (auth, opportunities, matching, notifications).",
+    "TITLE": "Findra API",
+    "DESCRIPTION": "Backend API for Findra (auth, opportunities, matching, notifications).",
     "VERSION": "0.1.0",
     # Swagger UI will use Bearer auth automatically when security schemes are present.
     "SERVE_INCLUDE_SCHEMA": False,
@@ -204,7 +204,7 @@ PYROGRAM_SESSION_STRING = os.getenv("PYROGRAM_SESSION_STRING")
 # Brevo email (transactional)
 BREVO_API_KEY = os.getenv("BREVO_API_KEY")
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL")
-BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Opportunity Finder")
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "Findra")
 
 # Frontend URL (for password reset links)
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000").strip().rstrip("/")

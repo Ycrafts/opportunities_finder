@@ -75,7 +75,7 @@ export function CVUploadSection({ onApplied, initialSession }: CVUploadSectionPr
       setSession(initialSession);
       if (initialSession.status === "COMPLETED") {
         setIsReviewing(true);
-      } else if (initialSession.status !== "COMPLETED" && initialSession.status !== "FAILED") {
+      } else if (initialSession.status !== "FAILED") {
         // Start polling if session is still processing
         startPolling(initialSession.id);
       }

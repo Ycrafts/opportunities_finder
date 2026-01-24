@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
-  title: Opportunity Finder API
+  title: Findra API
   version: 0.1.0
-  description: Backend API for Opportunity Finder (auth, opportunities, matching,
+  description: Backend API for Findra (auth, opportunities, matching,
     notifications).
 paths:
   /api/auth/logout/:

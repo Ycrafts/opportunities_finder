@@ -5,8 +5,8 @@
 
 export const config = {
   app: {
-    name: "Opportunity Finder",
-    description: "Find opportunities that match your skills and interests",
+    name: "Findra",
+    description: "Precise matching for jobs, internships, scholarships, and professional growth",
   },
   theme: {
     defaultTheme: "system" as "light" | "dark" | "system",

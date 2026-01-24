@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Opportunity Finder - Find Your Perfect Match",
+  title: "Findra - Find Your Perfect Match",
   description: "Discover opportunities that match your skills and interests",
 };
 

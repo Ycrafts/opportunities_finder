@@ -159,7 +159,7 @@ View details in your dashboard.
 """.strip()
 
         if channel == NotificationChannel.EMAIL:
-            return base_message + f"\n\nBest regards,\nOpportunity Finder Team"
+            return base_message + f"\n\nBest regards,\nFindra Team"
 
         elif channel == NotificationChannel.TELEGRAM:
             return f"🎯 *New Match Found!*\n\n🏢 *{opportunity.organization or 'Not specified'}*\n📋 *{opportunity.title}*\n⭐ Score: `{score:.1f}/10.0`\n\n{justification}"

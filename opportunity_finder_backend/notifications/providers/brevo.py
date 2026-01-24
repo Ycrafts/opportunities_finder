@@ -19,7 +19,7 @@ class BrevoEmailClient:
     def __init__(self, api_key: str, sender_email: str, sender_name: str | None = None):
         self.api_key = api_key
         self.sender_email = sender_email
-        self.sender_name = sender_name or "Opportunity Finder"
+        self.sender_name = sender_name or "Findra"
 
     def send_email(self, *, to_email: str, subject: str, text: str) -> dict[str, Any]:
         payload = {
