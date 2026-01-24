@@ -2,7 +2,6 @@ import axios, { AxiosError, AxiosInstance } from "axios";
 
 // Get API URL from environment or detect from current host
 const getApiBaseUrl = (): string => {
-  // Use environment variable if set
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL;
   }
