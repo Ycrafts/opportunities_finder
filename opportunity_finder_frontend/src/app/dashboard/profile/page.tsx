@@ -161,7 +161,7 @@ export default function ProfilePage() {
 
   if (profileError) {
     return (
-      <DashboardLayout navItems={navItems} title="Profile">
+      <DashboardLayout navItems={navItems} >
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-destructive">
@@ -176,7 +176,7 @@ export default function ProfilePage() {
   const profileEmpty = isProfileEmpty(profile);
 
   return (
-    <DashboardLayout navItems={navItems} title="Profile">
+    <DashboardLayout navItems={navItems}>
       <div className="space-y-6">
         {profileEmpty && !pendingSession ? (
           // No profile yet - show upload only
@@ -233,8 +233,12 @@ export default function ProfilePage() {
                   </p>
                 </div>
                 {!isEditing && (
-                  <Button onClick={() => setIsEditing(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
+                  <Button 
+                   variant="default"
+                    onClick={() => setIsEditing(true)} 
+                    className="bg-[#0f9b57] hover:bg-[#0d8a4e] text-white"
+                  >
+                    <Edit className="mr-2 h-4 w-4 " />
                     Edit Profile
                   </Button>
                 )}

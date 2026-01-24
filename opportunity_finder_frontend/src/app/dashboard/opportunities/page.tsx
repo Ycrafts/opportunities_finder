@@ -234,7 +234,7 @@ export default function OpportunitiesPage() {
   };
 
   return (
-    <DashboardLayout navItems={navItems} title="Opportunities">
+    <DashboardLayout navItems={navItems}>
       <div className="space-y-6">
         {/* Header */}
         <FadeIn>
@@ -248,9 +248,9 @@ export default function OpportunitiesPage() {
               </p>
             </div>
             <Button
-              variant="outline"
+              variant="default"
               onClick={() => setShowFilters(!showFilters)}
-              className="gap-2 w-full sm:w-auto"
+              className="gap-2 w-full sm:w-auto bg-[#0f9b57] hover:bg-[#0d8a4e] text-white"
             >
               <Filter className="h-4 w-4" />
               Filters

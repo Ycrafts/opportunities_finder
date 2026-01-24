@@ -413,7 +413,7 @@ export default function PreferencesPage() {
 
   if (isLoading || configLoading) {
     return (
-      <DashboardLayout navItems={navItems} title="Match Preferences">
+      <DashboardLayout navItems={navItems}>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -428,7 +428,7 @@ export default function PreferencesPage() {
 
   if (configError) {
     return (
-      <DashboardLayout navItems={navItems} title="Match Preferences">
+      <DashboardLayout navItems={navItems} >
         <Card>
           <CardContent className="pt-6">
             <p className="text-destructive">
@@ -441,7 +441,7 @@ export default function PreferencesPage() {
   }
 
   return (
-    <DashboardLayout navItems={navItems} title="Match Preferences">
+    <DashboardLayout navItems={navItems}>
       <div className="space-y-6 max-w-5xl">
         <FadeIn>
           <Card>
@@ -475,7 +475,7 @@ export default function PreferencesPage() {
                       threshold_score: value,
                     }));
                   }}
-                  className="w-full accent-black dark:accent-white"
+                  className="w-full accent-[#0f9b57]"
                 />
                 <div className="flex justify-between text-xs text-muted-foreground">
                   <span>3</span>
@@ -627,7 +627,7 @@ export default function PreferencesPage() {
                           <label className="flex items-center gap-2 text-sm font-medium">
                             <input
                               type="checkbox"
-                              className="h-4 w-4 rounded border-black text-black accent-black"
+                              className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                               checked={isTypeSelected}
                               onChange={() => toggleOpportunityTypeSelection(type.id)}
                             />
@@ -679,7 +679,7 @@ export default function PreferencesPage() {
                                       <label className="flex items-center gap-2 text-sm">
                                         <input
                                           type="checkbox"
-                                          className="h-4 w-4 rounded border-black text-black accent-black"
+                                          className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                                           checked={isDomainSelected}
                                           onChange={() =>
                                             toggleDomainSelection(domain.id, type.id)
@@ -718,7 +718,7 @@ export default function PreferencesPage() {
                                               >
                                                 <input
                                                   type="checkbox"
-                                                  className="h-4 w-4 rounded border-black text-black accent-black"
+                                                  className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                                                   checked={isSpecSelected}
                                                   onChange={() =>
                                                     toggleSpecializationSelection(
@@ -816,7 +816,7 @@ export default function PreferencesPage() {
                               <label className="flex items-center gap-2 text-sm">
                                 <input
                                   type="checkbox"
-                                  className="h-4 w-4 rounded border-black text-black accent-black"
+                                  className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                                   checked={!!isSelected}
                                   onChange={() => toggleLocationSelection(location.id)}
                                 />
@@ -853,7 +853,7 @@ export default function PreferencesPage() {
                                         <label className="flex items-center gap-2 text-sm">
                                           <input
                                             type="checkbox"
-                                            className="h-4 w-4 rounded border-black text-black accent-black"
+                                            className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                                             checked={!!childSelected}
                                             onChange={() => toggleLocationSelection(child.id)}
                                           />
@@ -874,7 +874,7 @@ export default function PreferencesPage() {
                                               >
                                                 <input
                                                   type="checkbox"
-                                                  className="h-4 w-4 rounded border-black text-black accent-black"
+                                                  className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                                                   checked={!!grandchildSelected}
                                                   onChange={() => toggleLocationSelection(grandchild.id)}
                                                 />
@@ -1061,7 +1061,7 @@ export default function PreferencesPage() {
                           notify_via_telegram: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-black text-black accent-black"
+                      className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                     />
                     <Label htmlFor="notify_telegram" className="cursor-pointer">
                       Telegram
@@ -1078,7 +1078,7 @@ export default function PreferencesPage() {
                           notify_via_email: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-black text-black accent-black"
+                      className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                     />
                     <Label htmlFor="notify_email" className="cursor-pointer">
                       Email
@@ -1095,7 +1095,7 @@ export default function PreferencesPage() {
                           notify_via_web_push: e.target.checked,
                         }))
                       }
-                      className="h-4 w-4 rounded border-black text-black accent-black"
+                      className="h-4 w-4 rounded border-black text-black accent-[#0f9b57]"
                     />
                     <Label htmlFor="notify_web_push" className="cursor-pointer">
                       Web Push

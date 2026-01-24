@@ -137,7 +137,7 @@ export default function DashboardPage() {
                   New Opportunities
                 </CardTitle>
                 <div className="rounded-md bg-muted/50 p-1.5">
-                  <Briefcase className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Briefcase className="h-3.5 w-3.5 text-[#0f9b57]" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-1">
@@ -160,7 +160,7 @@ export default function DashboardPage() {
                   Matches Generated
                 </CardTitle>
                 <div className="rounded-md bg-muted/50 p-1.5">
-                  <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                  <FileText className="h-3.5 w-3.5 text-[#0f9b57]" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-1">
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                   Active Matches
                 </CardTitle>
                 <div className="rounded-md bg-muted/50 p-1.5">
-                  <Bell className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Bell className="h-3.5 w-3.5 text-[#0f9b57]" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-1">
@@ -206,7 +206,7 @@ export default function DashboardPage() {
                   Cover Letters Used
                 </CardTitle>
                 <div className="rounded-md bg-muted/50 p-1.5">
-                  <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                  <Users className="h-3.5 w-3.5 text-[#0f9b57]" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-1">

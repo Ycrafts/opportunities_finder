@@ -123,7 +123,7 @@ export default function MatchesPage() {
   }, [matches, query]);
 
   return (
-    <DashboardLayout navItems={navItems} title="Matches">
+    <DashboardLayout navItems={navItems}>
       <div className="space-y-6 max-w-6xl">
         <FadeIn>
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -143,7 +143,9 @@ export default function MatchesPage() {
                   className="pl-9 w-60"
                 />
               </div>
-              <Button asChild variant="outline">
+              <Button 
+              asChild variant="default"
+              className="bg-[#0f9b57] hover:bg-[#0d8a4e] text-white">
                 <Link href="/dashboard/preferences">Refine preferences</Link>
               </Button>
             </div>

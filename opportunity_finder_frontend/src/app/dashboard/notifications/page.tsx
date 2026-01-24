@@ -112,7 +112,7 @@ export default function NotificationsPage() {
   const unreadLabel = unreadCount === 1 ? "unread" : "unread";
 
   return (
-    <DashboardLayout navItems={navItemsWithBadge} title="Notifications">
+    <DashboardLayout navItems={navItemsWithBadge}>
       <div className="space-y-6 max-w-5xl">
         <FadeIn>
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -123,10 +123,11 @@ export default function NotificationsPage() {
               </p>
             </div>
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
               disabled={markAllViewedMutation.isPending || unreadCount === 0}
               onClick={() => markAllViewedMutation.mutate()}
+              className="bg-[#0f9b57] hover:bg-[#0d8a4e] text-white"
             >
               Mark all read
             </Button>
