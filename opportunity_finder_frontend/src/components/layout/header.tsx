@@ -18,6 +18,15 @@ import {
 export function Header() {
   const { isAuthenticated, user, logout, isLoading } = useAuth();
 
+  const scrollToAuthSection = (mode: "login" | "signup") => {
+    const authSection = document.getElementById("get-started");
+    if (!authSection) return;
+    const offset = 180;
+    const top = authSection.getBoundingClientRect().top + window.scrollY + offset;
+    window.scrollTo({ top, behavior: "smooth" });
+    window.dispatchEvent(new CustomEvent("auth-mode-change", { detail: mode }));
+  };
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent border-0 backdrop-blur-0 supports-[backdrop-filter]:bg-transparent">
       <motion.div
@@ -72,32 +81,14 @@ export function Header() {
                     variant="ghost"
                     className="hidden sm:inline-flex"
                     onClick={() => {
-                      const authSection =
-                        document.getElementById("get-started");
-                      if (authSection) {
-                        authSection.scrollIntoView({ behavior: "smooth" });
-                        window.dispatchEvent(
-                          new CustomEvent("auth-mode-change", {
-                            detail: "login",
-                          })
-                        );
-                      }
+                      scrollToAuthSection("login");
                     }}
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => {
-                      const authSection =
-                        document.getElementById("get-started");
-                      if (authSection) {
-                        authSection.scrollIntoView({ behavior: "smooth" });
-                        window.dispatchEvent(
-                          new CustomEvent("auth-mode-change", {
-                            detail: "signup",
-                          })
-                        );
-                      }
+                      scrollToAuthSection("signup");
                     }}
                     className="bg-[#0f9b57] hover:bg-[#0d884d]"
                   >
