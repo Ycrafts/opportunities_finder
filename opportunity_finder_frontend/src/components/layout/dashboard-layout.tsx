@@ -39,13 +39,11 @@ interface NavItem {
 interface DashboardLayoutProps {
   children: ReactNode;
   navItems: NavItem[];
-  title: string;
 }
 
 export function DashboardLayout({
   children,
   navItems,
-  title,
 }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
@@ -149,9 +147,6 @@ export function DashboardLayout({
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold tracking-tight truncate">
-              {title}
-            </h1>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle />

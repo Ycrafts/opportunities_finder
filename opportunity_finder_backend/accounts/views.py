@@ -1,6 +1,9 @@
 import logging
+from datetime import timedelta
 
 from django.conf import settings
+from django.db.models import Count
+from django.db.models.functions import TruncWeek
 from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.mail import send_mail
@@ -8,6 +11,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
@@ -162,6 +166,87 @@ class LogoutAllView(generics.GenericAPIView):
     def post(self, request):
         blacklist_user_tokens(request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DashboardStatsView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        from cover_letters.models import CoverLetter
+        from matching.models import Match
+        from opportunities.models import Opportunity
+
+        now = timezone.now()
+        last_7_days = now - timedelta(days=7)
+        last_30_days = now - timedelta(days=30)
+        last_8_weeks = now - timedelta(weeks=8)
+        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+        new_opportunities_7_days = Opportunity.objects.filter(created_at__gte=last_7_days).count()
+        new_opportunities_30_days = Opportunity.objects.filter(created_at__gte=last_30_days).count()
+
+        weekly_opportunities = (
+            Opportunity.objects.filter(created_at__gte=last_8_weeks)
+            .annotate(week=TruncWeek("created_at"))
+            .values("week")
+            .annotate(count=Count("id"))
+            .order_by("week")
+        )
+        opportunities_weekly = [
+            {
+                "week_start": item["week"].date().isoformat() if item["week"] else None,
+                "count": item["count"],
+            }
+            for item in weekly_opportunities
+        ]
+
+        popular_domains = (
+            Opportunity.objects.filter(
+                status=Opportunity.Status.ACTIVE,
+                op_type__name="JOB",
+            )
+            .values("domain__name")
+            .annotate(count=Count("id"))
+            .order_by("-count")[:5]
+        )
+        popular_domains_list = [
+            {"name": item["domain__name"], "count": item["count"]}
+            for item in popular_domains
+        ]
+
+        matches_total = Match.objects.filter(user=request.user).count()
+        matches_last_7_days = Match.objects.filter(
+            user=request.user,
+            created_at__gte=last_7_days,
+        ).count()
+
+        active_matches = Match.objects.filter(
+            user=request.user,
+            status=Match.MatchStatus.ACTIVE,
+        ).count()
+
+        cover_letters_monthly_count = CoverLetter.objects.filter(
+            user=request.user,
+            created_at__gte=month_start,
+        ).count()
+
+        cover_letters_monthly_limit = None
+        if request.user.subscription_level != SubscriptionLevel.PREMIUM:
+            cover_letters_monthly_limit = 30
+
+        return Response(
+            {
+                "new_opportunities_last_7_days": new_opportunities_7_days,
+                "new_opportunities_last_30_days": new_opportunities_30_days,
+                "opportunities_weekly": opportunities_weekly,
+                "popular_domains": popular_domains_list,
+                "matches_total": matches_total,
+                "matches_last_7_days": matches_last_7_days,
+                "active_matches": active_matches,
+                "cover_letters_monthly_count": cover_letters_monthly_count,
+                "cover_letters_monthly_limit": cover_letters_monthly_limit,
+            }
+        )
 
 
 class PasswordChangeView(generics.GenericAPIView):

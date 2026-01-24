@@ -67,6 +67,18 @@ export interface SubscriptionUpgradeCreateRequest {
   note?: string;
 }
 
+export interface DashboardStats {
+  new_opportunities_last_7_days: number;
+  new_opportunities_last_30_days: number;
+  opportunities_weekly: Array<{ week_start: string | null; count: number }>;
+  popular_domains: Array<{ name: string | null; count: number }>;
+  matches_total: number;
+  matches_last_7_days: number;
+  active_matches: number;
+  cover_letters_monthly_count: number;
+  cover_letters_monthly_limit: number | null;
+}
+
 export interface ApiError {
   detail?: string;
   email?: string[];
@@ -129,6 +141,11 @@ export const authApi = {
       "/auth/subscription/requests/"
     );
     return response.data.results ?? [];
+  },
+
+  async getDashboardStats(): Promise<DashboardStats> {
+    const response = await apiClient.get<DashboardStats>("/auth/dashboard/stats/");
+    return response.data;
   },
 
   async createSubscriptionUpgradeRequest(
