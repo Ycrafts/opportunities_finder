@@ -35,6 +35,7 @@ import {
   X,
   ChevronRight,
   ChevronDown,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -64,6 +65,7 @@ const navItems = [
     badge: 0,
   },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 export default function PreferencesPage() {

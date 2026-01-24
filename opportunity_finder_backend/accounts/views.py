@@ -116,6 +116,11 @@ class SubscriptionUpgradeRequestListCreateView(generics.ListCreateAPIView):
         return SubscriptionUpgradeRequestSerializer
 
     def create(self, request, *args, **kwargs):
+        if request.user.subscription_level == SubscriptionLevel.PREMIUM:
+            return Response(
+                {"error": "You already have premium access."},
+                status=status.HTTP_409_CONFLICT,
+            )
         if SubscriptionUpgradeRequest.objects.filter(
             user=request.user,
             status=SubscriptionUpgradeRequest.Status.PENDING,

@@ -17,6 +17,7 @@ import {
   Calendar,
   Sparkles,
   Search,
+  Crown,
 } from "lucide-react";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -42,6 +43,7 @@ const navItems = [
     badge: 0,
   },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 const statusFilters: { label: string; value: MatchStatus | "ALL" }[] = [

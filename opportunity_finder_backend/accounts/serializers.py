@@ -78,6 +78,7 @@ class SubscriptionUpgradeRequestSerializer(serializers.ModelSerializer):
             "id",
             "status",
             "payment_method",
+            "interval_period",
             "receipt",
             "note",
             "admin_note",
@@ -89,10 +90,14 @@ class SubscriptionUpgradeRequestSerializer(serializers.ModelSerializer):
 
 class SubscriptionUpgradeRequestCreateSerializer(serializers.ModelSerializer):
     payment_method = serializers.CharField(required=False, default="Telebirr")
+    interval_period = serializers.CharField(
+        required=False,
+        default=SubscriptionUpgradeRequest.IntervalPeriod.MONTHLY,
+    )
 
     class Meta:
         model = SubscriptionUpgradeRequest
-        fields = ("payment_method", "receipt", "note")
+        fields = ("payment_method", "interval_period", "receipt", "note")
 
 
 class SubscriptionUpgradeRequestReviewSerializer(serializers.ModelSerializer):

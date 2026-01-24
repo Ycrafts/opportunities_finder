@@ -29,6 +29,7 @@ import {
   Upload,
   Loader2,
   Sliders,
+  Crown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { profileApi, type UserProfile, type UpdateProfileRequest, type LanguageEntry } from "@/lib/api/profile";
@@ -46,6 +47,7 @@ const navItems = [
   { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
   { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 // Helper function to check if profile is empty

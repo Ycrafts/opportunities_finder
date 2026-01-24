@@ -121,11 +121,11 @@ export default function UpgradePage() {
                 <CardHeader>
                   <CardTitle className="text-base font-semibold">How it works</CardTitle>
                   <CardDescription className="text-xs">
-                    Pay via Telebirr to 0932223954, upload your receipt, and we will approve within 24 hours.
+                    Pay 200 per month via Telebirr to 0932223954 (Yonatan Assefa), upload your receipt, and we will approve within 24 hours.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-muted-foreground">
-                  <p>1. Send payment to the official Telebirr account.</p>
+                  <p>1. Send the 200 per month payment to the official Telebirr account.</p>
                   <p>2. Upload your receipt screenshot or PDF.</p>
                   <p>3. Our admin team will approve or reject your request.</p>
                 </CardContent>

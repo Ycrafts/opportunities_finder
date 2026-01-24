@@ -92,6 +92,9 @@ class User(AbstractUser):
 
 
 class SubscriptionUpgradeRequest(models.Model):
+    class IntervalPeriod(models.TextChoices):
+        MONTHLY = "MONTHLY", "Monthly"
+
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         APPROVED = "APPROVED", "Approved"
@@ -108,6 +111,11 @@ class SubscriptionUpgradeRequest(models.Model):
         default=Status.PENDING,
     )
     payment_method = models.CharField(max_length=50, default="Telebirr")
+    interval_period = models.CharField(
+        max_length=20,
+        choices=IntervalPeriod.choices,
+        default=IntervalPeriod.MONTHLY,
+    )
     receipt = models.FileField(upload_to="subscription_receipts/", blank=True)
     note = models.TextField(blank=True, default="")
     admin_note = models.TextField(blank=True, default="")

@@ -21,20 +21,25 @@ import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
+  Award,
+  Briefcase,
   Building2,
   Calendar,
-  DollarSign,
+  CheckCircle2,
   ExternalLink,
-  Loader2,
-  MapPin,
-  Target,
-  Briefcase,
-  Users,
   FileText,
+  Globe,
+  LayoutDashboard,
+  MapPin,
+  Loader2,
+  Share2,
+  Sparkles,
+  Target,
+  Users,
   Bell,
   Settings,
   Sliders,
-  LayoutDashboard,
+  Crown,
 } from "lucide-react";
 
 const navItems = [
@@ -50,6 +55,7 @@ const navItems = [
     badge: 0,
   },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 const formatWorkMode = (mode: string) => {

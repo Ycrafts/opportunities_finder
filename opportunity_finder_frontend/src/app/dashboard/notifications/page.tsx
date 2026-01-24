@@ -3,7 +3,16 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Briefcase, LayoutDashboard, Settings, Sliders, Target, Users } from "lucide-react";
+import {
+  Bell,
+  Briefcase,
+  LayoutDashboard,
+  Settings,
+  Sliders,
+  Target,
+  Users,
+  Crown,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -22,6 +31,7 @@ const navItems = [
   { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
   { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 const formatDate = (dateString?: string | null) => {

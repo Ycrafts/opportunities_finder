@@ -26,6 +26,7 @@ import {
   Filter,
   X,
   Sliders,
+  Crown,
 } from "lucide-react";
 import { FadeIn } from "@/components/animations/fade-in";
 import { useAuth } from "@/contexts/auth-context";
@@ -49,6 +50,7 @@ const navItems = [
     badge: 0,
   },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 export default function OpportunitiesPage() {

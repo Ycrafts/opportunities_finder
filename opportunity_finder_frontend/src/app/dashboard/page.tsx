@@ -11,6 +11,7 @@ import {
   Settings,
   Target,
   Sliders,
+  Crown,
 } from "lucide-react";
 import { FadeIn } from "@/components/animations/fade-in";
 import { useAuth } from "@/contexts/auth-context";
@@ -25,6 +26,7 @@ const navItems = [
   { title: "Preferences", href: "/dashboard/preferences", icon: Sliders },
   { title: "Notifications", href: "/dashboard/notifications", icon: Bell, badge: 0 },
   { title: "Settings", href: "/dashboard/settings", icon: Settings },
+  { title: "Upgrade", href: "/dashboard/upgrade", icon: Crown },
 ];
 
 export default function DashboardPage() {
