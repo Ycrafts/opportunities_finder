@@ -73,6 +73,8 @@ export default function SettingsPage() {
     mutationFn: () => authApi.logoutAll(),
     onSuccess: async () => {
       toast.success("Signed out of all devices.");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       await logout();
     },
     onError: () => toast.error("Failed to log out all sessions."),
