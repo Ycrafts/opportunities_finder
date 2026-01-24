@@ -50,7 +50,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <DashboardLayout navItems={adminNavItems} title="Admin Dashboard">
+    <DashboardLayout navItems={adminNavItems}>
       <div className="space-y-6">
         {/* Welcome Section */}
         <FadeIn>

@@ -89,7 +89,7 @@ export default function UpgradePage() {
   }
 
   return (
-    <DashboardLayout navItems={navItems} title="Upgrade">
+    <DashboardLayout navItems={navItems}>
       <div className="space-y-6 max-w-4xl">
         <FadeIn>
           <div>

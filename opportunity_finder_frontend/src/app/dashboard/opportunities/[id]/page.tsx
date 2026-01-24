@@ -349,7 +349,7 @@ export default function OpportunityDetailPage() {
 
   if (isLoading || isLoadingOpportunity) {
     return (
-      <DashboardLayout navItems={navItems} title="Opportunity Details">
+      <DashboardLayout navItems={navItems}>
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
@@ -363,7 +363,7 @@ export default function OpportunityDetailPage() {
 
   if (error || !opportunity) {
     return (
-      <DashboardLayout navItems={navItems} title="Opportunity Details">
+      <DashboardLayout navItems={navItems}>
         <Card>
           <CardContent className="pt-6">
             <p className="text-destructive">Failed to load opportunity details.</p>
@@ -379,7 +379,7 @@ export default function OpportunityDetailPage() {
   );
 
   return (
-    <DashboardLayout navItems={navItems} title="Opportunity Details">
+    <DashboardLayout navItems={navItems}>
       <div className="space-y-6 max-w-5xl">
         <FadeIn>
           <Card>
