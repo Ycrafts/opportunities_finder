@@ -102,5 +102,16 @@ services:
     ports:
       - "3000:3000"
 
+  telegram-bot:
+    build:
+      context: ./opportunity_finder_bot
+      dockerfile: Dockerfile
+    env_file:
+      - ./opportunity_finder_bot/.env
+    environment:
+      API_BASE_URL: http://backend:8000
+    depends_on:
+      - backend
+
 volumes:
   pgdata:
