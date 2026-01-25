@@ -3,6 +3,7 @@
 import { ReactNode, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -28,6 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { notificationsApi } from "@/lib/api/notifications";
 
 interface NavItem {
   title: string;
@@ -48,6 +50,15 @@ export function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ["notifications", "unread"],
+    queryFn: notificationsApi.unreadCount,
+    enabled: !!user,
+  });
+
+  const navItemsWithBadge = navItems.map((item) =>
+    item.title === "Notifications" ? { ...item, badge: unreadCount } : item
+  );
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -76,7 +87,7 @@ export function DashboardLayout({
 
           {/* Navigation */}
           <nav className="flex-1 space-y-0.5 overflow-y-auto p-3">
-            {navItems.map((item) => {
+            {navItemsWithBadge.map((item) => {
               const Icon = item.icon;
               // More precise active state: exact match OR child route (but not parent routes)
               const isActive =
