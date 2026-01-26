@@ -11,7 +11,8 @@ services:
       DATABASE_URL: postgres://opportunity_finder:opportunity_finder@db:5432/opportunity_finder
       CELERY_BROKER_URL: redis://redis:6379/0
       DJANGO_DEBUG: "1"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend,${LAN_IP:-localhost}"
+      CORS_ALLOW_ALL_ORIGINS: "1"
     depends_on:
       - db
       - redis
@@ -31,7 +32,8 @@ services:
       DATABASE_URL: postgres://opportunity_finder:opportunity_finder@db:5432/opportunity_finder
       CELERY_BROKER_URL: redis://redis:6379/0
       DJANGO_DEBUG: "1"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend,${LAN_IP:-localhost}"
+      CORS_ALLOW_ALL_ORIGINS: "1"
     depends_on:
       - db
       - redis
@@ -49,7 +51,8 @@ services:
       DATABASE_URL: postgres://opportunity_finder:opportunity_finder@db:5432/opportunity_finder
       CELERY_BROKER_URL: redis://redis:6379/0
       DJANGO_DEBUG: "1"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend,${LAN_IP:-localhost}"
+      CORS_ALLOW_ALL_ORIGINS: "1"
     depends_on:
       - db
       - redis
@@ -67,7 +70,8 @@ services:
       DATABASE_URL: postgres://opportunity_finder:opportunity_finder@db:5432/opportunity_finder
       CELERY_BROKER_URL: redis://redis:6379/0
       DJANGO_DEBUG: "1"
-      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend"
+      DJANGO_ALLOWED_HOSTS: "localhost,127.0.0.1,backend,${LAN_IP:-localhost}"
+      CORS_ALLOW_ALL_ORIGINS: "1"
     depends_on:
       - db
       - redis
@@ -96,11 +100,12 @@ services:
       context: ./opportunity_finder_frontend
       dockerfile: Dockerfile
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://${LAN_IP:-localhost}:8000
     depends_on:
       - backend
     ports:
       - "3000:3000"
+    command: ["npm", "run", "dev", "--", "-H", "0.0.0.0", "-p", "3000"]
 
   telegram-bot:
     build:

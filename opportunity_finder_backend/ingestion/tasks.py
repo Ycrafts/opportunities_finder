@@ -50,6 +50,8 @@ def ingest_due_sources(self, source_type: str | None = None, limit: int | None =
     qs = Source.objects.filter(enabled=True)
     if source_type:
         qs = qs.filter(source_type=source_type)
+    else:
+        qs = qs.filter(source_type__in=[Source.SourceType.RSS, Source.SourceType.TELEGRAM])
 
     scheduled = 0
     skipped = 0

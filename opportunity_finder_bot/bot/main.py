@@ -112,9 +112,7 @@ async def menu_text_action(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if not update.message:
         return
     selection = update.message.text or ""
-    if selection == "Login":
-        await login_start(update, context)
-    elif selection == "Opportunities":
+    if selection == "Opportunities":
         await list_opportunities(update, context)
     elif selection == "Matches":
         await list_matches(update, context)
@@ -301,17 +299,20 @@ def main() -> None:
     application.add_handler(CallbackQueryHandler(menu_action, pattern="^menu_"))
     application.add_handler(CallbackQueryHandler(opportunities_page_action, pattern="^opps_page:"))
     application.add_handler(
-        MessageHandler(filters.Regex("^(Login|Opportunities|Matches)$"), menu_text_action)
-    )
-    application.add_handler(
         ConversationHandler(
-            entry_points=[CommandHandler("login", login_start)],
+            entry_points=[
+                CommandHandler("login", login_start),
+                MessageHandler(filters.Regex("^Login$"), login_start),
+            ],
             states={
                 LOGIN_EMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, login_email)],
                 LOGIN_PASSWORD: [MessageHandler(filters.TEXT & ~filters.COMMAND, login_password)],
             },
             fallbacks=[CommandHandler("cancel", login_cancel)],
         )
+    )
+    application.add_handler(
+        MessageHandler(filters.Regex("^(Opportunities|Matches)$"), menu_text_action)
     )
     application.add_handler(CommandHandler("opportunities", list_opportunities))
     application.add_handler(CommandHandler("search", search_opportunities))

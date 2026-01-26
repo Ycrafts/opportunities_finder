@@ -104,6 +104,8 @@ def build_extract_prompt(*, text_en: str, source_url: str | None = None) -> str:
         "- INTERNSHIP opportunities: Look for 'internship', 'intern', training programs\n"
         "- TRAINING opportunities: Look for 'training', 'course', 'workshop', 'certification'\n\n"
         "EXTRACTION RULES:\n"
+        "- If you cannot confidently pick a specific domain/specialization for the chosen opportunity type,\n"
+        "  choose the catch-all Domain 'Other' and Specialization 'General' for that opportunity type.\n"
         "- You MUST pick IDs from the TAXONOMY_JSON below. NEVER make up IDs!\n"
         "- CRITICAL: opportunity_type vs employment_type:\n"
         "  - opportunity_type: What kind of opportunity is this? (JOB, SCHOLARSHIP, INTERNSHIP, TRAINING)\n"

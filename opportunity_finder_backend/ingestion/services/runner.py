@@ -36,7 +36,13 @@ class IngestionRunner:
     def run_source(self, *, source: Source, limit: int | None = None) -> WriteResult:
         if limit is None:
             limit = int(getattr(settings, "INGESTION_LIMIT_PER_SOURCE", 20))
-        adapter_cls = self.registry.get_adapter_class(source.source_type)
+        try:
+            adapter_cls = self.registry.get_adapter_class(source.source_type)
+        except KeyError as e:
+            error_message = str(e)
+            source.record_run_result(success=False, error_message=error_message)
+            return WriteResult(created=0, updated=0)
+
         adapter = adapter_cls()
 
         try:

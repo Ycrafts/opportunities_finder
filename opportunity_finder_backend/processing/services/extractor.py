@@ -296,24 +296,40 @@ class RawOpportunityExtractor:
 
         text_lower = text_en.lower()
 
+        def apply_other_general_fallback(*, reason_flag: str) -> bool:
+            if not opp.op_type_id:
+                return False
+            op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
+            if not op_type:
+                return False
+            other_domain = Domain.objects.filter(name="Other", opportunity_type=op_type).first()
+            if not other_domain:
+                return False
+            other_spec = Specialization.objects.filter(name="General", domain=other_domain).first()
+            if not other_spec:
+                return False
+
+            opp.domain = other_domain
+            opp.specialization = other_spec
+            flags = dict((opp.metadata or {}).get("flags") or {})
+            flags[reason_flag] = True
+            opp.metadata = {
+                **(opp.metadata or {}),
+                "flags": flags,
+            }
+            return True
+
         # If confidence is low, force "Other/General" fallback when available
         threshold = getattr(settings, "EXTRACTION_CONFIDENCE_THRESHOLD", 0.6)
         if opp.op_type_id and confidence is not None and confidence < threshold:
-            op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
-            if op_type:
-                other_domain = Domain.objects.filter(name="Other", opportunity_type=op_type).first()
-                if other_domain:
-                    other_spec = Specialization.objects.filter(name="General", domain=other_domain).first()
-                    if other_spec:
-                        opp.domain = other_domain
-                        opp.specialization = other_spec
-                        flags = dict((opp.metadata or {}).get("flags") or {})
-                        flags["low_confidence_taxonomy_fallback"] = True
-                        opp.metadata = {
-                            **(opp.metadata or {}),
-                            "flags": flags,
-                        }
-                        return
+            if apply_other_general_fallback(reason_flag="low_confidence_taxonomy_fallback"):
+                return
+
+        # If AI failed to set domain/specialization (or they were cleared as inconsistent),
+        # prefer the explicit catch-all instead of guessing a specific domain.
+        if opp.op_type_id and (not opp.domain_id or not opp.specialization_id):
+            if apply_other_general_fallback(reason_flag="missing_taxonomy_fallback"):
+                return
 
         # If domain/specialization are null but op_type is set, try to infer reasonable defaults
         if opp.op_type_id and (not opp.domain_id or not opp.specialization_id):
@@ -339,25 +355,20 @@ class RawOpportunityExtractor:
                             opp.specialization = spec
 
                 elif op_type.name == "JOB":
-                    # For jobs, default to Software if no domain specified
-                    domain = Domain.objects.filter(name="Software", opportunity_type=op_type).first()
-                    if domain:
-                        opp.domain = domain
-                        spec = Specialization.objects.filter(domain=domain).first()
-                        if spec:
-                            opp.specialization = spec
+                    pass
 
         # CRITICAL: Ensure domain and specialization are always set (required fields)
         # Use catch-all fallback if still null
         if opp.op_type_id and (not opp.domain_id or not opp.specialization_id):
+            if apply_other_general_fallback(reason_flag="final_taxonomy_fallback"):
+                return
+
             op_type = OpportunityType.objects.filter(id=opp.op_type_id).first()
             if op_type:
-                # Last resort: get first available domain for this op_type
-                domain = Domain.objects.filter(opportunity_type=op_type).first()
+                domain = Domain.objects.filter(opportunity_type=op_type).order_by("id").first()
                 if domain:
                     opp.domain = domain
-                    # Get first specialization for this domain
-                    spec = Specialization.objects.filter(domain=domain).first()
+                    spec = Specialization.objects.filter(domain=domain).order_by("id").first()
                     if spec:
                         opp.specialization = spec
 
