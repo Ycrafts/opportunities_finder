@@ -277,19 +277,23 @@ export default function Home() {
                 <div className="flex items-center gap-20 min-w-max pr-20">
                   <img src="/logos/ethiojobs.jpg" alt="Ethiojobs" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
                   <img src="/logos/afriwork.webp" alt="Afriwork" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
-                  <img src="/logos/josad.webp" alt="Partner" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
-                  <img src="/logos/ethiojobs.jpg" alt="Ethiojobs" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
-                  <img src="/logos/afriwork.webp" alt="Afriwork" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
-                  <img src="/logos/josad.webp" alt="Partner" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                  <img src="/logos/brightschol.jpg" alt="Partner" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                  <img src="/logos/dereja.jpg" alt="Ethiojobs" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                  <img src="/logos/ethvac.jpg" alt="Afriwork" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                  <img src="/logos/opp4all.jpg" alt="Partner" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                  <img src="/logos/opp4youth.jpg" alt="Partner" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
+                  <img src="/logos/wwr.jpg" alt="Partner" className="h-20 w-auto opacity-80 hover:opacity-100 transition-opacity" />
                 </div>
                 {/* Duplicate for seamless loop */}
                 <div className="flex items-center gap-20 min-w-max pr-20" aria-hidden>
                   <img src="/logos/ethiojobs.jpg" alt="" className="h-20 w-auto opacity-80" />
                   <img src="/logos/afriwork.webp" alt="" className="h-20 w-auto opacity-80" />
-                  <img src="/logos/josad.webp" alt="" className="h-20 w-auto opacity-80" />
-                  <img src="/logos/ethiojobs.jpg" alt="" className="h-20 w-auto opacity-80" />
-                  <img src="/logos/afriwork.webp" alt="" className="h-20 w-auto opacity-80" />
-                  <img src="/logos/josad.webp" alt="" className="h-20 w-auto opacity-80" />
+                  <img src="/logos/brightschol.jpg" alt="" className="h-20 w-auto opacity-80" />
+                  <img src="/logos/dereja.jpg" alt="" className="h-20 w-auto opacity-80" />
+                  <img src="/logos/ethvac.jpg" alt="" className="h-20 w-auto opacity-80" />
+                  <img src="/logos/opp4all.jpg" alt="" className="h-20 w-auto opacity-80" />
+                  <img src="/logos/opp4youth.jpg" alt="" className="h-20 w-auto opacity-80" />
+                  <img src="/logos/wwr.jpg" alt="" className="h-20 w-auto opacity-80" />
                 </div>
               </motion.div>
               {/* Edge fade helpers (optional subtle) */}
