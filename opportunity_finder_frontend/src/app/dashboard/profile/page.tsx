@@ -92,23 +92,21 @@ export default function ProfilePage() {
     queryKey: ["cv-sessions"],
     queryFn: () => cvExtractionApi.getSessions(),
     enabled: isAuthenticated,
+    refetchOnMount: true,
   });
 
-  // Find the most recent completed session that hasn't been applied
+  // Find the most recent session that should continue the onboarding flow.
+  // This must include in-progress sessions so navigation away/back doesn't lose state.
   useEffect(() => {
     if (cvSessions && cvSessions.length > 0) {
-      // Find completed sessions, sorted by most recent
-      const completedSessions = cvSessions
-        .filter(s => s.status === "COMPLETED")
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      
-      if (completedSessions.length > 0) {
-        // Check if profile is empty - if so, this session is pending application
-        if (profile && isProfileEmpty(profile)) {
-          setPendingSession(completedSessions[0]);
-        } else {
-          setPendingSession(null);
-        }
+      // If profile is empty, we want to show the latest CV extraction session even if it is still extracting.
+      // This enables the UX: start extraction -> navigate away -> return -> see the same generating/review UI.
+      if (profile && isProfileEmpty(profile)) {
+        const latestRelevant = cvSessions
+          .filter((s) => s.status !== "FAILED")
+          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+
+        setPendingSession(latestRelevant || null);
       } else {
         setPendingSession(null);
       }
