@@ -37,7 +37,7 @@ class MyConfigView(generics.RetrieveUpdateAPIView):
         # After the user sets preferences for the first time AND has a matching profile snapshot,
         # backfill matches against recent opportunities (defaults to MATCHING_BACKFILL_DAYS=5).
         try:
-            from matching.tasks import backfill_recent_opportunities_for_user
+            from django.conf import settings
             from profiles.models import UserProfile
 
             with transaction.atomic():
@@ -45,7 +45,15 @@ class MyConfigView(generics.RetrieveUpdateAPIView):
                 if profile and (profile.matching_profile_json or {}):
                     flags = dict(((profile.matching_profile_json or {}).get("flags")) or {})
                     if not flags.get("onboarding_backfill_done"):
-                        backfill_recent_opportunities_for_user.delay(request.user.id)
+                        if getattr(settings, "CELERY_ENABLED", True):
+                            from matching.tasks import backfill_recent_opportunities_for_user
+
+                            backfill_recent_opportunities_for_user.delay(request.user.id)
+                        else:
+                            from matching.services.matcher import OpportunityMatcher
+
+                            matcher = OpportunityMatcher()
+                            matcher.match_recent_opportunities_for_user(user_id=request.user.id)
                         flags["onboarding_backfill_done"] = True
                         profile.matching_profile_json = {
                             **(profile.matching_profile_json or {}),

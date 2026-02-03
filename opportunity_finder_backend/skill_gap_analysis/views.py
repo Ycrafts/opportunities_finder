@@ -122,20 +122,35 @@ class SkillGapAnalysisCreateView(generics.CreateAPIView):
             status=SkillGapAnalysis.Status.GENERATING
         )
 
-        # Queue the analysis task
-        task = analyze_skill_gaps_task.delay(analysis.id)
+        from django.conf import settings
 
-        # Store task ID
-        analysis.task_id = task.id
-        analysis.save(update_fields=["task_id"])
+        if getattr(settings, "CELERY_ENABLED", True):
+            # Queue the analysis task
+            task = analyze_skill_gaps_task.delay(analysis.id)
 
-        # Return the analysis record
+            # Store task ID
+            analysis.task_id = task.id
+            analysis.save(update_fields=["task_id"])
+
+            # Return the analysis record
+            response_serializer = SkillGapAnalysisDetailSerializer(analysis)
+            return Response(
+                {
+                    **response_serializer.data,
+                    "message": "Skill gap analysis started. Results will be available shortly.",
+                    "task_id": task.id
+                },
+                status=status.HTTP_202_ACCEPTED
+            )
+
+        result = analyze_skill_gaps_task(analysis.id)
+        analysis.refresh_from_db()
         response_serializer = SkillGapAnalysisDetailSerializer(analysis)
         return Response(
             {
                 **response_serializer.data,
-                "message": "Skill gap analysis started. Results will be available shortly.",
-                "task_id": task.id
+                "message": "Skill gap analysis completed.",
+                "result": result,
             },
-            status=status.HTTP_202_ACCEPTED
+            status=status.HTTP_201_CREATED,
         )

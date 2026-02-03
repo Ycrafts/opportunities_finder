@@ -147,10 +147,20 @@ class OpportunityMatcher:
 
         Uses Celery to create and send notifications asynchronously.
         """
-        from notifications.tasks import create_notifications_for_match
+        from django.conf import settings
 
-        # Queue notification creation task
-        create_notifications_for_match.delay(match.id)
+        if getattr(settings, "CELERY_ENABLED", True):
+            from notifications.tasks import create_notifications_for_match
+
+            create_notifications_for_match.delay(match.id)
+            return
+
+        from notifications.services.notifier import NotificationService
+
+        service = NotificationService()
+        notifications = service.create_notifications_for_match(match)
+        for n in notifications:
+            service.send_notification(n)
 
     def _stage1_sql_filter(self, opportunity: Opportunity, config: MatchConfig) -> list[Opportunity]:
         """

@@ -38,6 +38,12 @@ def env_csv(key: str, default: list[str] | None = None) -> list[str]:
         return default or []
     return [item.strip() for item in val.split(",") if item.strip()]
 
+
+CELERY_ENABLED = env_bool("CELERY_ENABLED", default=True)
+
+
+CRON_SECRET = os.getenv("CRON_SECRET", "").strip()
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 

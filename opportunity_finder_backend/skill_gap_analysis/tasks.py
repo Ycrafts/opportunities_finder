@@ -20,7 +20,7 @@ from .services.skill_gap_analyzer import SkillGapAnalyzer
     priority=9,
     queue="priority",
 )
-def analyze_skill_gaps_task(self, analysis_id: int) -> dict:
+def analyze_skill_gaps_task(self=None, analysis_id: int = 0) -> dict:
     """
     Asynchronous task to perform skill gap analysis.
 

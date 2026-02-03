@@ -38,7 +38,9 @@ class CVUploadView(generics.CreateAPIView):
             status=CVExtractionSession.Status.UPLOADED
         )
 
-        if sync_processing:
+        from django.conf import settings
+
+        if sync_processing or not getattr(settings, "CELERY_ENABLED", True):
             # Process synchronously for development/testing
             service = CVExtractionService()
             try:
@@ -62,7 +64,7 @@ class CVUploadView(generics.CreateAPIView):
                 raise
 
         # Return session info (with results if sync)
-        if sync_processing:
+        if sync_processing or not getattr(settings, "CELERY_ENABLED", True):
             response_serializer = CVExtractionResultSerializer(session)
         else:
             response_serializer = CVExtractionSessionSerializer(session)
@@ -185,13 +187,21 @@ class ApplyExtractionToProfileView(generics.UpdateAPIView):
         is_ready = bool((profile.matching_profile_text or "").strip())
         if is_ready and not was_ready:
             from matching.models import Match
-            from matching.tasks import backfill_recent_opportunities_for_user
+            from django.conf import settings
 
             if not Match.objects.filter(user=profile.user).exists():
-                backfill_recent_opportunities_for_user.apply_async(
-                    args=[profile.user_id],
-                    countdown=30,
-                )
+                if getattr(settings, "CELERY_ENABLED", True):
+                    from matching.tasks import backfill_recent_opportunities_for_user
+
+                    backfill_recent_opportunities_for_user.apply_async(
+                        args=[profile.user_id],
+                        countdown=30,
+                    )
+                else:
+                    from matching.services.matcher import OpportunityMatcher
+
+                    matcher = OpportunityMatcher()
+                    matcher.match_recent_opportunities_for_user(user_id=profile.user_id)
 
         return Response({
             "message": "CV data successfully applied to profile",

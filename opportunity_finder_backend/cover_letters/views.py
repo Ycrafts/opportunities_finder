@@ -155,22 +155,44 @@ class CoverLetterGenerateView(generics.CreateAPIView):
             status=CoverLetter.Status.GENERATING
         )
 
-        # Queue async generation task
-        from .tasks import generate_cover_letter_task
-        task = generate_cover_letter_task.delay(
-            user_id=user.id,
-            opportunity_id=opportunity.id,
-            version=version,
-            existing_letter_id=existing_letter.id if existing_letter else None
-        )
+        from django.conf import settings
 
-        # Store task ID for tracking (optional)
-        cover_letter.task_id = task.id
-        cover_letter.save(update_fields=['task_id'])
+        if getattr(settings, "CELERY_ENABLED", True):
+            # Queue async generation task
+            from .tasks import generate_cover_letter_task
+            task = generate_cover_letter_task.delay(
+                user_id=user.id,
+                opportunity_id=opportunity.id,
+                version=version,
+                existing_letter_id=existing_letter.id if existing_letter else None
+            )
 
-        # Return the cover letter in generating status
+            # Store task ID for tracking (optional)
+            cover_letter.task_id = task.id
+            cover_letter.save(update_fields=['task_id'])
+
+            # Return the cover letter in generating status
+            response_serializer = CoverLetterSerializer(cover_letter)
+            return Response(response_serializer.data, status=status.HTTP_202_ACCEPTED)
+
+        generator = CoverLetterGenerator()
+        try:
+            generated_content = generator.generate_cover_letter(
+                user_profile=user_profile,
+                opportunity=opportunity,
+                existing_letter=existing_letter,
+            )
+            cover_letter.generated_content = generated_content
+            cover_letter.status = CoverLetter.Status.GENERATED
+            cover_letter.save(update_fields=["generated_content", "status"])
+        except Exception as e:
+            cover_letter.status = CoverLetter.Status.FAILED
+            cover_letter.error_message = str(e)
+            cover_letter.save(update_fields=["status", "error_message"])
+            return Response({"error": "Failed to generate cover letter."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         response_serializer = CoverLetterSerializer(cover_letter)
-        return Response(response_serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
 class CoverLetterRegenerateView(generics.CreateAPIView):
@@ -241,18 +263,39 @@ class CoverLetterRegenerateView(generics.CreateAPIView):
             status=CoverLetter.Status.GENERATING
         )
 
-        # Queue async regeneration task
-        from .tasks import generate_cover_letter_task
-        task = generate_cover_letter_task.delay(
-            user_id=request.user.id,
-            opportunity_id=letter.opportunity.id,
-            version=new_letter.version,
-            existing_letter_id=letter.id
-        )
+        from django.conf import settings
 
-        # Store task ID
-        new_letter.task_id = task.id
-        new_letter.save(update_fields=['task_id'])
+        if getattr(settings, "CELERY_ENABLED", True):
+            # Queue async regeneration task
+            from .tasks import generate_cover_letter_task
+            task = generate_cover_letter_task.delay(
+                user_id=request.user.id,
+                opportunity_id=letter.opportunity.id,
+                version=new_letter.version,
+                existing_letter_id=letter.id
+            )
+
+            # Store task ID
+            new_letter.task_id = task.id
+            new_letter.save(update_fields=['task_id'])
+
+            response_serializer = CoverLetterSerializer(new_letter)
+            return Response(response_serializer.data, status=status.HTTP_202_ACCEPTED)
+
+        try:
+            generated_content = generator.generate_cover_letter(
+                user_profile=user_profile,
+                opportunity=letter.opportunity,
+                existing_letter=letter,
+            )
+            new_letter.generated_content = generated_content
+            new_letter.status = CoverLetter.Status.GENERATED
+            new_letter.save(update_fields=["generated_content", "status"])
+        except Exception as e:
+            new_letter.status = CoverLetter.Status.FAILED
+            new_letter.error_message = str(e)
+            new_letter.save(update_fields=["status", "error_message"])
+            return Response({"error": "Failed to generate cover letter."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         response_serializer = CoverLetterSerializer(new_letter)
-        return Response(response_serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)

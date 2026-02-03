@@ -27,6 +27,7 @@ urlpatterns = [
     path("api/opportunities/", include("opportunities.urls")),
     path("api/matches/", include("matching.urls")),
     path("api/notifications/", include("notifications.urls")),
+    path("api/cron/", include("opportunity_finder.cron_urls")),
     path("api/cv-extraction/", include("resume_extractions.urls")),
     path("api/cover-letters/", include("cover_letters.urls")),
     path("api/skill-gap-analysis/", include("skill_gap_analysis.urls")),
