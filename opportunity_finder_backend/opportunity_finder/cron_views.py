@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from ingestion.services.runner import IngestionRunner
 from notifications.services.notifier import NotificationService
+from opportunities.models import Opportunity
 from opportunities.models import Source
 from processing.tasks import process_pending_raw
 
@@ -82,6 +83,61 @@ def ingest_due_sources(request: HttpRequest) -> JsonResponse:
                 "total_updated": total_updated,
                 "source_type": source_type,
                 "limit": limit,
+            }
+        )
+    except Exception as exc:
+        return _server_error(exc)
+
+
+@csrf_exempt
+def process_matching(request: HttpRequest) -> JsonResponse:
+    try:
+        if request.method != "POST":
+            return JsonResponse({"detail": "Method not allowed"}, status=405)
+        if not _is_authorized(request):
+            return _unauthorized()
+
+        hours_back = int(request.GET.get("hours_back") or 24)
+        opportunity_limit = int(request.GET.get("opportunity_limit") or getattr(settings, "MATCHING_BATCH_SIZE", 1))
+        user_limit = int(request.GET.get("user_limit") or 1)
+
+        from django.utils import timezone
+        from matching.services.matcher import OpportunityMatcher
+        from profiles.models import UserProfile
+
+        cutoff = timezone.now() - timedelta(hours=hours_back)
+        opportunities = list(
+            Opportunity.objects.filter(
+                status=Opportunity.Status.ACTIVE,
+                created_at__gte=cutoff,
+            ).order_by("-created_at")[: max(opportunity_limit, 0)]
+        )
+
+        matcher = OpportunityMatcher()
+        processed_opportunities = 0
+        matched_total = 0
+
+        for opp in opportunities:
+            users = list(
+                UserProfile.objects.filter(
+                    user__is_active=True,
+                    matching_profile_json__isnull=False,
+                ).order_by("user_id").values_list("user_id", flat=True)[: max(user_limit, 0)]
+            )
+            if not users:
+                continue
+
+            res = matcher.match_opportunity_to_users(opportunity_id=opp.id, user_ids=list(users))
+            processed_opportunities += 1
+            matched_total += int(res.get("matches_created") or 0)
+
+        return JsonResponse(
+            {
+                "processed_opportunities": processed_opportunities,
+                "opportunity_limit": opportunity_limit,
+                "user_limit": user_limit,
+                "hours_back": hours_back,
+                "matches_created": matched_total,
             }
         )
     except Exception as exc:

@@ -28,10 +28,7 @@ def process_raw_opportunity(self=None, raw_id: int = 0, model: str | None = None
                 countdown=30,  # 30 second delay
             )
         else:
-            from matching.services.matcher import OpportunityMatcher
-
-            matcher = OpportunityMatcher()
-            matcher.match_opportunity_to_users(opportunity_id=res.opportunity_id)
+            pass
 
     return {"raw_id": raw_id, "opportunity_id": res.opportunity_id, "created": res.created}
 
