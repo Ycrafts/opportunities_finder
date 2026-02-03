@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import datetime, timezone as dt_timezone
 
 from django.conf import settings
@@ -47,6 +48,13 @@ class TelegramAdapter(BaseAdapter):
             raise ValueError("TelegramAdapter can only be used with TELEGRAM sources.")
         if not source.identifier:
             raise ValueError("Telegram Source.identifier must be set (channel username/link/id).")
+
+        # Pyrogram's sync layer expects an asyncio event loop in the current thread.
+        # Under Gunicorn/thread executors, there may be no default loop.
+        try:
+            asyncio.get_event_loop()
+        except RuntimeError:
+            asyncio.set_event_loop(asyncio.new_event_loop())
 
         # Import lazily so the rest of the backend can run without pyrogram installed.
         from pyrogram import Client  # type: ignore
