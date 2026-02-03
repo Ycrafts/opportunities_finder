@@ -58,6 +58,12 @@ ALLOWED_HOSTS = env_csv(
     default=["localhost", "127.0.0.1", "192.168.146.17"]
 )
 
+# Running behind a reverse proxy (e.g. Koyeb) - respect X-Forwarded-Proto for HTTPS.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# CSRF: required for admin login when served over HTTPS on a custom domain.
+CSRF_TRUSTED_ORIGINS = env_csv("CSRF_TRUSTED_ORIGINS", default=[])
+
 
 # Application definition
 
