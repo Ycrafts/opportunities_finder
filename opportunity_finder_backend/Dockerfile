@@ -14,9 +14,13 @@ COPY requirements.txt ./
 
 RUN pip install --no-cache-dir -r requirements.txt
 
+RUN pip install --no-cache-dir whitenoise
+
 COPY . ./
 
 ENV DJANGO_SETTINGS_MODULE=opportunity_finder.settings
+
+RUN python manage.py collectstatic --noinput
 
 EXPOSE 8000
 
