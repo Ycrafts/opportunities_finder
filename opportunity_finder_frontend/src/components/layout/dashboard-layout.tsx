@@ -15,6 +15,7 @@ import {
   Bell,
   BarChart3,
   User,
+  LogOut,
   Menu,
   X,
 } from "lucide-react";
@@ -129,14 +130,8 @@ export function DashboardLayout({
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => logout()}>
+                  <LogOut className="h-4 w-4" />
                   Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>

@@ -6,6 +6,7 @@ import { config } from "@/lib/config";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useAuth } from "@/contexts/auth-context";
+import { LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -58,19 +59,8 @@ export function Header() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>{user?.email}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/dashboard">Dashboard</Link>
-                    </DropdownMenuItem>
-                    {user?.role === "ADMIN" && (
-                      <DropdownMenuItem asChild>
-                        <Link href="/admin">Admin Dashboard</Link>
-                      </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem asChild>
-                      <Link href="/profile">Profile</Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => logout()}>
+                      <LogOut className="h-4 w-4" />
                       Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
