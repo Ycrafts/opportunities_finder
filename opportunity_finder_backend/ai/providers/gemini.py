@@ -97,8 +97,8 @@ class GeminiAIProvider(BaseAIProvider):
         if _GLOBAL_BUCKET is None:
             rpm = float(getattr(settings, "GEMINI_RPM_LIMIT", 15) or 0)
             rps = max(rpm / 60.0, 0.0)
-            # Capacity ~1 minute burst at configured rpm.
-            _GLOBAL_BUCKET = _TokenBucket(rate_per_second=rps, capacity=max(rpm, 1.0))
+            # Keep local smoothing minimal to avoid allowing bursts.
+            _GLOBAL_BUCKET = _TokenBucket(rate_per_second=rps, capacity=1.0)
 
     def _load_config(self) -> GeminiConfig:
         # Support both single key (backwards compatibility) and multiple keys
@@ -252,6 +252,31 @@ class GeminiAIProvider(BaseAIProvider):
             if rpm_int <= 0:
                 return
 
+            # Enforce a minimum spacing between calls to avoid minute-window bursts.
+            # This runs under the advisory lock, so it is race-free across all workers.
+            min_interval_s = 60.0 / float(rpm_int)
+            while True:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT created_at FROM ai_usage_aiapicall WHERE provider = %s "
+                        "ORDER BY created_at DESC LIMIT 1",
+                        ["gemini"],
+                    )
+                    row = cursor.fetchone()
+
+                if not row or not row[0]:
+                    break
+
+                try:
+                    age_s = (timezone.now() - row[0]).total_seconds()
+                except Exception:
+                    break
+
+                if age_s >= min_interval_s:
+                    break
+
+                time.sleep(min(max(0.05, min_interval_s - age_s), 2.0))
+
             # Under the advisory lock, the below query is race-free across all workers.
             # We only need a rough 60s sliding window.
             while True:
@@ -308,7 +333,7 @@ class GeminiAIProvider(BaseAIProvider):
             tried_keys.add(api_key)
 
             # Global pacing to prevent bursts that trigger free-tier 429s.
-            _wait_global_throttle()
+            # Only enforce throttle under the shared lock to avoid per-process burst behavior.
 
             req = Request(
                 self._endpoint(model=model, api_key=api_key),

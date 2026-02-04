@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import timedelta
 
 from django.conf import settings
+from django.db import connection
 from django.http import HttpRequest, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
@@ -91,11 +92,20 @@ def ingest_due_sources(request: HttpRequest) -> JsonResponse:
 
 @csrf_exempt
 def process_matching(request: HttpRequest) -> JsonResponse:
+    lock_key = 915_042_913
+    got_lock = False
     try:
         if request.method != "POST":
             return JsonResponse({"detail": "Method not allowed"}, status=405)
         if not _is_authorized(request):
             return _unauthorized()
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_try_advisory_lock(%s)", [lock_key])
+            got_lock = bool(cursor.fetchone()[0])
+
+        if not got_lock:
+            return JsonResponse({"detail": "Matching job already running"}, status=200)
 
         hours_back = int(request.GET.get("hours_back") or 24)
         opportunity_limit = int(request.GET.get("opportunity_limit") or getattr(settings, "MATCHING_BATCH_SIZE", 1))
