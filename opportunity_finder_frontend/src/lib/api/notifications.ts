@@ -28,7 +28,12 @@ export type NotificationItem = {
 export const notificationsApi = {
     async list() {
         const response = await apiClient.get<{ results: NotificationItem[] }>(
-            "/notifications/"
+            "/notifications/",
+            {
+                params: {
+                    channel: "WEB_DASHBOARD",
+                },
+            }
         );
         return response.data.results ?? [];
     },
@@ -42,7 +47,12 @@ export const notificationsApi = {
     },
     async unreadCount() {
         const response = await apiClient.get<{ unread_count: number }>(
-            "/notifications/unread_count/"
+            "/notifications/unread_count/",
+            {
+                params: {
+                    channel: "WEB_DASHBOARD",
+                },
+            }
         );
         return response.data.unread_count ?? 0;
     },

@@ -21,7 +21,6 @@ import {
   Search,
   MapPin,
   Calendar,
-  DollarSign,
   Building2,
   Filter,
   X,
@@ -614,13 +613,7 @@ export default function OpportunitiesPage() {
                             )}
                           </div>
 
-                          {/* Compensation */}
-                          {compensation && (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                              <DollarSign className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span className="truncate">{compensation}</span>
-                            </div>
-                          )}
+                          {compensation && null}
 
                           {/* Deadline */}
                           {opportunity.deadline && (

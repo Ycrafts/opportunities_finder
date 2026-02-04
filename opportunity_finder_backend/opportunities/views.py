@@ -64,7 +64,7 @@ class OpportunityListView(generics.ListAPIView):
         if status_:
             qs = qs.filter(status=status_)
 
-        return qs.order_by("-published_at", "-created_at")
+        return qs.order_by("-created_at")
 
 
 class OpportunityDetailView(generics.RetrieveAPIView):

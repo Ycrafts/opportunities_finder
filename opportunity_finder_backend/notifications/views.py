@@ -19,7 +19,11 @@ class NotificationViewSet(ModelViewSet):
 
     def get_queryset(self):
         """Return notifications for the current user."""
-        return Notification.objects.filter(user=self.request.user)
+        qs = Notification.objects.filter(user=self.request.user)
+        channel = (self.request.query_params.get("channel") or "").strip()
+        if channel:
+            qs = qs.filter(channel=channel)
+        return qs
 
     @action(detail=True, methods=['post'])
     def mark_viewed(self, request, pk=None):
