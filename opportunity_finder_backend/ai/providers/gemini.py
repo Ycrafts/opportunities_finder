@@ -11,6 +11,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from django.conf import settings
+from django.db import connection
+from django.utils import timezone
 
 from ai.contracts import AIJSONResult, AITextResult, BaseAIProvider, JSONSchema
 from ai.errors import AIConfigurationError, AIPermanentError, AITransientError
@@ -46,6 +48,24 @@ class _TokenBucket:
 
 _GLOBAL_BUCKET: _TokenBucket | None = None
 _GLOBAL_COOLDOWN_UNTIL: float = 0.0
+
+
+_GEMINI_RATE_LOCK_KEY = 915_042_901
+
+
+class _AdvisoryLock:
+    def __init__(self, key: int):
+        self.key = int(key)
+
+    def __enter__(self):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_lock(%s)", [self.key])
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_unlock(%s)", [self.key])
+        return False
 
 
 @dataclass(frozen=True)
@@ -226,6 +246,38 @@ class GeminiAIProvider(BaseAIProvider):
             if _GLOBAL_BUCKET is not None:
                 _GLOBAL_BUCKET.wait_for_token()
 
+            # Cross-process pacing using the database.
+            rpm = float(getattr(settings, "GEMINI_RPM_LIMIT", 15) or 0)
+            rpm_int = int(max(rpm, 0))
+            if rpm_int <= 0:
+                return
+
+            # Under the advisory lock, the below query is race-free across all workers.
+            # We only need a rough 60s sliding window.
+            while True:
+                cutoff = timezone.now() - timezone.timedelta(seconds=60)
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT created_at FROM ai_usage_aiapicall WHERE provider = %s AND created_at >= %s "
+                        "ORDER BY created_at DESC LIMIT %s",
+                        ["gemini", cutoff, rpm_int],
+                    )
+                    rows = cursor.fetchall()
+
+                if len(rows) < rpm_int:
+                    return
+
+                oldest = rows[-1][0]
+                try:
+                    age_s = (timezone.now() - oldest).total_seconds()
+                except Exception:
+                    return
+
+                if age_s >= 60.0:
+                    return
+
+                time.sleep(min(max(0.05, 60.0 - age_s), 2.0))
+
         def _extract_retry_after_seconds(err_body: str) -> float | None:
             if not err_body:
                 return None
@@ -275,10 +327,14 @@ class GeminiAIProvider(BaseAIProvider):
                 if delay:
                     time.sleep(delay)
                 try:
-                    with urlopen(req, timeout=self.cfg.timeout_seconds) as resp:
-                        raw = resp.read().decode("utf-8")
-                        response_data = json.loads(raw) if raw else {}
-                        return response_data, current_api_key_identifier
+                    # A single shared lock prevents aggregate bursts across gunicorn workers/threads.
+                    # We hold the lock through the request so only one Gemini call is in-flight at a time.
+                    with _AdvisoryLock(_GEMINI_RATE_LOCK_KEY):
+                        _wait_global_throttle()
+                        with urlopen(req, timeout=self.cfg.timeout_seconds) as resp:
+                            raw = resp.read().decode("utf-8")
+                            response_data = json.loads(raw) if raw else {}
+                            return response_data, current_api_key_identifier
                 except HTTPError as e:
                     # Read response body for debugging (without leaking key)
                     try:
