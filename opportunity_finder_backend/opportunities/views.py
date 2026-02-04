@@ -12,7 +12,7 @@ from .serializers import (
 
 
 class OpportunityListView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = OpportunitySerializer
 
     def get_queryset(self):
@@ -68,7 +68,7 @@ class OpportunityListView(generics.ListAPIView):
 
 
 class OpportunityDetailView(generics.RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     serializer_class = OpportunitySerializer
     queryset = Opportunity.objects.all().select_related(
         "op_type",

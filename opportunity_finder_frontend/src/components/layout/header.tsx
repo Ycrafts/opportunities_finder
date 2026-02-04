@@ -70,6 +70,13 @@ export function Header() {
                   <Button
                     variant="ghost"
                     className="hidden sm:inline-flex"
+                    asChild
+                  >
+                    <Link href="/opportunities">Browse Opportunities</Link>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="hidden sm:inline-flex"
                     onClick={() => {
                       scrollToAuthSection("login");
                     }}

@@ -14,6 +14,10 @@ import {
   type LoginRequest,
   type RegisterRequest,
 } from "@/lib/api/auth";
+import {
+  consumePostAuthRedirect,
+  sanitizeInternalRedirectPath,
+} from "@/lib/auth/post-auth-redirect";
 
 interface AuthContextType {
   user: User | null;
@@ -65,6 +69,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("access_token", response.access);
       localStorage.setItem("refresh_token", response.refresh);
       const userData = await refreshUser();
+      const redirect = sanitizeInternalRedirectPath(consumePostAuthRedirect());
+      if (redirect) {
+        router.push(redirect);
+        return;
+      }
       // Redirect based on user role
       if (userData?.role === "ADMIN") {
         router.push("/admin");

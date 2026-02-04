@@ -16,7 +16,7 @@ import { opportunitiesApi } from "@/lib/api/opportunities";
 import apiClient from "@/lib/api-client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { FadeIn } from "@/components/animations/fade-in";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -113,6 +113,7 @@ export default function OpportunityDetailPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const opportunityId = Number(params?.id);
   const queryClient = useQueryClient();
 
@@ -345,6 +346,42 @@ export default function OpportunityDetailPage() {
       toast.error(message);
     },
   });
+
+  useEffect(() => {
+    if (!isAuthenticated || isLoading) return;
+    if (!Number.isFinite(opportunityId)) return;
+    if (!opportunity) return;
+
+    const intent = searchParams?.get("intent");
+    if (!intent) return;
+
+    if (intent === "cover_letter") {
+      if (!generateCoverLetterMutation.isPending) {
+        generateCoverLetterMutation.mutate();
+      }
+    } else if (intent === "skill_gap") {
+      if (!analyzeSkillGapMutation.isPending) {
+        analyzeSkillGapMutation.mutate();
+      }
+    } else if (intent === "apply") {
+      if (opportunity.source_url) {
+        window.open(opportunity.source_url, "_blank", "noopener,noreferrer");
+      }
+    }
+
+    const next = new URL(window.location.href);
+    next.searchParams.delete("intent");
+    router.replace(next.pathname + next.search);
+  }, [
+    analyzeSkillGapMutation,
+    generateCoverLetterMutation,
+    isAuthenticated,
+    isLoading,
+    opportunity,
+    opportunityId,
+    router,
+    searchParams,
+  ]);
 
 
   if (isLoading || isLoadingOpportunity) {

@@ -161,6 +161,14 @@ export default function Home() {
                   >
                     Get Started
                   </Button>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="text-base bg-white/10 text-white hover:bg-white/20 border-white/20"
+                    asChild
+                  >
+                    <Link href="/opportunities">Browse Opportunities</Link>
+                  </Button>
                   <Button size="lg" variant="outline" className="text-base bg-white/10 text-white hover:bg-white/20 border-white/20" asChild>
                     <Link href="#learn-more">Learn More</Link>
                   </Button>
