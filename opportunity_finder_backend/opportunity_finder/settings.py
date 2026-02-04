@@ -233,6 +233,8 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")  # Backwards compatibility
 GEMINI_API_KEYS = env_csv("GEMINI_API_KEYS", default=None)  # List of keys for rotation
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash").strip()
 GEMINI_API_BASE = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com").strip().rstrip("/")
+GEMINI_RPM_LIMIT = float(os.getenv("GEMINI_RPM_LIMIT", "15"))
+GEMINI_429_COOLDOWN_SECONDS = float(os.getenv("GEMINI_429_COOLDOWN_SECONDS", "60"))
 AI_TIMEOUT_SECONDS = float(os.getenv("AI_TIMEOUT_SECONDS", "60"))
 AI_TEMPERATURE = float(os.getenv("AI_TEMPERATURE", "0.2"))
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
