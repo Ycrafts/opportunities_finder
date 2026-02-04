@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
   Briefcase,
@@ -87,14 +87,31 @@ export default function MatchesPage() {
   const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<MatchStatus | "ALL">("ALL");
   const [query, setQuery] = useState("");
+  const observerTarget = useRef<HTMLDivElement>(null);
 
   const {
-    data: matches,
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
     isLoading: isLoadingMatches,
     error,
-  } = useQuery({
+  } = useInfiniteQuery({
     queryKey: ["matches", statusFilter],
-    queryFn: () => matchesApi.list(statusFilter === "ALL" ? undefined : statusFilter),
+    queryFn: ({ pageParam = 1 }) =>
+      matchesApi.listPaginated({
+        status: statusFilter === "ALL" ? undefined : statusFilter,
+        page: pageParam,
+      }),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.next) {
+        const url = new URL(lastPage.next);
+        const page = url.searchParams.get("page");
+        return page ? parseInt(page, 10) : undefined;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
     enabled: isAuthenticated,
   });
 
@@ -104,23 +121,52 @@ export default function MatchesPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  const matches = useMemo(() => {
+    const items = data?.pages.flatMap((page) => page.results) || [];
+    const seen = new Set<number>();
+    const deduped = items.filter((item) => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+    return [...deduped].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
+  }, [data]);
+
   const filteredMatches = useMemo(() => {
-    if (!matches) return [];
+    if (!matches.length) return [];
     if (!query.trim()) return matches;
     const lowered = query.toLowerCase();
     return matches.filter((match) => {
       const opp = match.opportunity;
-      return [
-        opp.title,
-        opp.organization,
-        opp.domain,
-        opp.specialization,
-        opp.location,
-      ]
+      return [opp.title, opp.organization, opp.domain, opp.specialization, opp.location]
         .filter(Boolean)
         .some((value) => value!.toLowerCase().includes(lowered));
     });
   }, [matches, query]);
+
+  const handleObserver = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      const [target] = entries;
+      if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
+        fetchNextPage();
+      }
+    },
+    [fetchNextPage, hasNextPage, isFetchingNextPage]
+  );
+
+  useEffect(() => {
+    const element = observerTarget.current;
+    if (!element) return;
+
+    const observer = new IntersectionObserver(handleObserver, { threshold: 0.1 });
+    observer.observe(element);
+
+    return () => {
+      if (element) observer.unobserve(element);
+    };
+  }, [handleObserver]);
 
   return (
     <DashboardLayout navItems={navItems}>
@@ -237,6 +283,25 @@ export default function MatchesPage() {
                     </Card>
                   ))}
                 </div>
+              )}
+
+              {filteredMatches.length > 0 && (
+                <>
+                  <div ref={observerTarget} className="h-4" />
+                  {isFetchingNextPage && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Sparkles className="h-4 w-4 animate-pulse" />
+                      Loading more matches...
+                    </div>
+                  )}
+                  {!hasNextPage && !isLoadingMatches && (
+                    <div className="flex items-center justify-center py-6 border-t border-border/60">
+                      <div className="text-sm text-muted-foreground">
+                        You've reached the end.
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

@@ -34,12 +34,26 @@ export type MatchDetail = MatchListItem & {
     saved_at: string | null;
 };
 
+export type PaginatedResponse<T> = {
+    count: number;
+    next: string | null;
+    previous: string | null;
+    results: T[];
+};
+
 export const matchesApi = {
     async list(status?: MatchStatus) {
-        const response = await apiClient.get<{ results: MatchListItem[] }>("/matches/", {
+        const response = await apiClient.get<PaginatedResponse<MatchListItem>>("/matches/", {
             params: status ? { status } : undefined,
         });
         return response.data.results ?? [];
+    },
+
+    async listPaginated(params?: { status?: MatchStatus; page?: number }) {
+        const response = await apiClient.get<PaginatedResponse<MatchListItem>>("/matches/", {
+            params,
+        });
+        return response.data;
     },
     async getById(id: number) {
         const response = await apiClient.get<MatchDetail>(`/matches/${id}/`);

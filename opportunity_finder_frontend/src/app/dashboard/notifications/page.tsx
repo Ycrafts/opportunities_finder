@@ -152,6 +152,11 @@ export default function NotificationsPage() {
               ) : (
                 sortedNotifications.map((notification: NotificationItem) => {
                   const isUnread = !notification.viewed_at;
+                  const subjectText = notification.subject || "New match update";
+                  const opportunityTitle = (notification.opportunity_title || "").trim();
+                  const showOpportunityTitle =
+                    Boolean(opportunityTitle) &&
+                    !subjectText.toLowerCase().includes(opportunityTitle.toLowerCase());
                   const handleOpen = () => {
                     if (notification.opportunity_id) {
                       router.push(`/dashboard/opportunities/${notification.opportunity_id}`);
@@ -181,7 +186,7 @@ export default function NotificationsPage() {
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-medium">
-                            {notification.subject || "New match update"}
+                            {subjectText}
                           </span>
                           {isUnread && (
                             <Badge variant="secondary" className="text-[10px]">
@@ -197,7 +202,9 @@ export default function NotificationsPage() {
                         <p className="text-xs text-muted-foreground">
                           {notification.organization}
                         </p>
-                        <p className="text-sm">{notification.opportunity_title}</p>
+                        {showOpportunityTitle && (
+                          <p className="text-sm">{notification.opportunity_title}</p>
+                        )}
                         {notification.message && (
                           <p className="text-xs text-muted-foreground">
                             {notification.message}

@@ -128,100 +128,92 @@ export default function DashboardPage() {
           </div>
         </FadeIn>
 
-        {/* Stats Cards */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-          <FadeIn delay={0.1}>
+        {/* Recent Activity */}
+        <div className="grid gap-5 md:grid-cols-2">
+          <FadeIn delay={0.5}>
             <Card className="border-border/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  New Opportunities
-                </CardTitle>
-                <div className="rounded-md bg-muted/50 p-1.5">
-                  <Briefcase className="h-3.5 w-3.5 text-[#0f9b57]" />
-                </div>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
+                <CardDescription className="text-xs mt-1">Get started with these actions</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-1">
-                <div className="number-display text-3xl font-semibold">
-                  {dashboardStats
-                    ? `${dashboardStats.new_opportunities_last_7_days} / ${dashboardStats.new_opportunities_last_30_days}`
-                    : "-"}
-                </div>
-                <p className="text-xs font-normal text-muted-foreground">
-                  Last 7 / 30 days
-                </p>
+              <CardContent className="space-y-2.5">
+                <Link
+                  href="/dashboard/profile"
+                  className="group block w-full rounded-lg border border-border/60 p-3.5 hover:border-border hover:bg-muted/30 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="font-medium text-sm">Complete Your Profile</div>
+                    <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground tabular-nums">
+                      {profileCompletion}%
+                    </span>
+                  </div>
+                  <div className="text-xs font-normal text-muted-foreground">
+                    Add your skills and preferences
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/profile#cv_file"
+                  className="group block w-full rounded-lg border border-border/60 p-3.5 hover:border-border hover:bg-muted/30 transition-all"
+                >
+                  <div className="font-medium text-sm mb-0.5">Upload Your CV</div>
+                  <div className="text-xs font-normal text-muted-foreground">
+                    Let AI extract your information
+                  </div>
+                </Link>
+                <Link
+                  href="/dashboard/opportunities"
+                  className="group block w-full rounded-lg border border-border/60 p-3.5 hover:border-border hover:bg-muted/30 transition-all"
+                >
+                  <div className="font-medium text-sm mb-0.5">Browse Opportunities</div>
+                  <div className="text-xs font-normal text-muted-foreground">
+                    Explore available opportunities
+                  </div>
+                </Link>
               </CardContent>
             </Card>
           </FadeIn>
 
-          <FadeIn delay={0.2}>
+          <FadeIn delay={0.6}>
             <Card className="border-border/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Matches Generated
-                </CardTitle>
-                <div className="rounded-md bg-muted/50 p-1.5">
-                  <FileText className="h-3.5 w-3.5 text-[#0f9b57]" />
-                </div>
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base font-semibold">Recent Matches</CardTitle>
+                <CardDescription className="text-xs mt-1">
+                  Latest opportunities matched to your profile
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-1">
-                <div className="number-display text-3xl font-semibold">
-                  {dashboardStats
-                    ? `${dashboardStats.matches_total} / ${dashboardStats.matches_last_7_days}`
-                    : "-"}
-                </div>
-                <p className="text-xs font-normal text-muted-foreground">
-                  Total and this week
-                </p>
-              </CardContent>
-            </Card>
-          </FadeIn>
-
-          <FadeIn delay={0.3}>
-            <Card className="border-border/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Active Matches
-                </CardTitle>
-                <div className="rounded-md bg-muted/50 p-1.5">
-                  <Bell className="h-3.5 w-3.5 text-[#0f9b57]" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <div className="number-display text-3xl font-semibold">
-                  {dashboardStats
-                    ? `${dashboardStats.active_matches ?? 0}`
-                    : "-"}
-                </div>
-                <p className="text-xs font-normal text-muted-foreground">
-                  Opportunities currently active
-                </p>
-              </CardContent>
-            </Card>
-          </FadeIn>
-
-          <FadeIn delay={0.4}>
-            <Card className="border-border/60">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Cover Letters Used
-                </CardTitle>
-                <div className="rounded-md bg-muted/50 p-1.5">
-                  <Users className="h-3.5 w-3.5 text-[#0f9b57]" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                <div className="number-display text-3xl font-semibold">
-                  {dashboardStats
-                    ? `${dashboardStats.cover_letters_monthly_count}${
-                        dashboardStats.cover_letters_monthly_limit
-                          ? ` / ${dashboardStats.cover_letters_monthly_limit}`
-                          : ""
-                      }`
-                    : "-"}
-                </div>
-                <p className="text-xs font-normal text-muted-foreground">
-                  Usage vs monthly limit
-                </p>
+              <CardContent>
+                {recentMatches.length ? (
+                  <div className="space-y-3">
+                    {recentMatches.map((match) => (
+                      <Link
+                        key={match.id}
+                        href={`/dashboard/opportunities/${match.opportunity.id}`}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/60 p-3 transition hover:border-border hover:bg-muted/30"
+                      >
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-foreground">
+                            {match.opportunity.title}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {match.opportunity.organization || "Unknown organization"}
+                          </div>
+                        </div>
+                        <div className="text-xs font-semibold text-foreground">
+                          {match.match_score ? match.match_score.toFixed(1) : "-"}
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <div className="mb-4 rounded-full bg-muted/50 p-3">
+                      <Briefcase className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-sm font-normal text-muted-foreground">
+                      No matches yet. Complete your profile to get started.
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </FadeIn>
@@ -329,92 +321,100 @@ export default function DashboardPage() {
           </Card>
         </FadeIn>
 
-        {/* Recent Activity */}
-        <div className="grid gap-5 md:grid-cols-2">
-          <FadeIn delay={0.5}>
+        {/* Stats Cards */}
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+          <FadeIn delay={0.1}>
             <Card className="border-border/60">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base font-semibold">Recent Matches</CardTitle>
-                <CardDescription className="text-xs mt-1">
-                  Latest opportunities matched to your profile
-                </CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  New Opportunities
+                </CardTitle>
+                <div className="rounded-md bg-muted/50 p-1.5">
+                  <Briefcase className="h-3.5 w-3.5 text-[#0f9b57]" />
+                </div>
               </CardHeader>
-              <CardContent>
-                {recentMatches.length ? (
-                  <div className="space-y-3">
-                    {recentMatches.map((match) => (
-                      <Link
-                        key={match.id}
-                        href={`/dashboard/opportunities/${match.opportunity.id}`}
-                        className="flex items-center justify-between gap-3 rounded-lg border border-border/60 p-3 transition hover:border-border hover:bg-muted/30"
-                      >
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-foreground">
-                            {match.opportunity.title}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {match.opportunity.organization || "Unknown organization"}
-                          </div>
-                        </div>
-                        <div className="text-xs font-semibold text-foreground">
-                          {match.match_score ? match.match_score.toFixed(1) : "-"}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="mb-4 rounded-full bg-muted/50 p-3">
-                      <Briefcase className="h-6 w-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm font-normal text-muted-foreground">
-                      No matches yet. Complete your profile to get started.
-                    </p>
-                  </div>
-                )}
+              <CardContent className="space-y-1">
+                <div className="number-display text-3xl font-semibold">
+                  {dashboardStats
+                    ? `${dashboardStats.new_opportunities_last_7_days} / ${dashboardStats.new_opportunities_last_30_days}`
+                    : "-"}
+                </div>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Last 7 / 30 days
+                </p>
               </CardContent>
             </Card>
           </FadeIn>
 
-          <FadeIn delay={0.6}>
+          <FadeIn delay={0.2}>
             <Card className="border-border/60">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-base font-semibold">Quick Actions</CardTitle>
-                <CardDescription className="text-xs mt-1">Get started with these actions</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Matches Generated
+                </CardTitle>
+                <div className="rounded-md bg-muted/50 p-1.5">
+                  <FileText className="h-3.5 w-3.5 text-[#0f9b57]" />
+                </div>
               </CardHeader>
-              <CardContent className="space-y-2.5">
-                <Link
-                  href="/dashboard/profile"
-                  className="group block w-full rounded-lg border border-border/60 p-3.5 hover:border-border hover:bg-muted/30 transition-all"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="font-medium text-sm">Complete Your Profile</div>
-                    <span className="ml-auto rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground tabular-nums">
-                      {profileCompletion}%
-                    </span>
-                  </div>
-                  <div className="text-xs font-normal text-muted-foreground">
-                    Add your skills and preferences
-                  </div>
-                </Link>
-                <Link
-                  href="/dashboard/profile#cv_file"
-                  className="group block w-full rounded-lg border border-border/60 p-3.5 hover:border-border hover:bg-muted/30 transition-all"
-                >
-                  <div className="font-medium text-sm mb-0.5">Upload Your CV</div>
-                  <div className="text-xs font-normal text-muted-foreground">
-                    Let AI extract your information
-                  </div>
-                </Link>
-                <Link
-                  href="/dashboard/opportunities"
-                  className="group block w-full rounded-lg border border-border/60 p-3.5 hover:border-border hover:bg-muted/30 transition-all"
-                >
-                  <div className="font-medium text-sm mb-0.5">Browse Opportunities</div>
-                  <div className="text-xs font-normal text-muted-foreground">
-                    Explore available opportunities
-                  </div>
-                </Link>
+              <CardContent className="space-y-1">
+                <div className="number-display text-3xl font-semibold">
+                  {dashboardStats
+                    ? `${dashboardStats.matches_total} / ${dashboardStats.matches_last_7_days}`
+                    : "-"}
+                </div>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Total and this week
+                </p>
+              </CardContent>
+            </Card>
+          </FadeIn>
+
+          <FadeIn delay={0.3}>
+            <Card className="border-border/60">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Active Matches
+                </CardTitle>
+                <div className="rounded-md bg-muted/50 p-1.5">
+                  <Bell className="h-3.5 w-3.5 text-[#0f9b57]" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                <div className="number-display text-3xl font-semibold">
+                  {dashboardStats
+                    ? `${dashboardStats.active_matches ?? 0}`
+                    : "-"}
+                </div>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Opportunities currently active
+                </p>
+              </CardContent>
+            </Card>
+          </FadeIn>
+
+          <FadeIn delay={0.4}>
+            <Card className="border-border/60">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  Cover Letters Used
+                </CardTitle>
+                <div className="rounded-md bg-muted/50 p-1.5">
+                  <Users className="h-3.5 w-3.5 text-[#0f9b57]" />
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                <div className="number-display text-3xl font-semibold">
+                  {dashboardStats
+                    ? `${dashboardStats.cover_letters_monthly_count}${
+                        dashboardStats.cover_letters_monthly_limit
+                          ? ` / ${dashboardStats.cover_letters_monthly_limit}`
+                          : ""
+                      }`
+                    : "-"}
+                </div>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Usage vs monthly limit
+                </p>
               </CardContent>
             </Card>
           </FadeIn>

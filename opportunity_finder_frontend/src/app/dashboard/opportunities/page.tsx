@@ -120,13 +120,17 @@ export default function OpportunitiesPage() {
   const opportunities = useMemo(() => {
     const items = data?.pages.flatMap((page) => page.results) || [];
     const seen = new Set<number>();
-    return items.filter((item) => {
+    const deduped = items.filter((item) => {
       if (seen.has(item.id)) {
         return false;
       }
       seen.add(item.id);
       return true;
     });
+
+    return [...deduped].sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    );
   }, [data]);
   const totalCount = data?.pages[0]?.count || 0;
 
