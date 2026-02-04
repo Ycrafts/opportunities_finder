@@ -17,7 +17,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/auth-context";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Filter, MapPin, Search, X } from "lucide-react";
+import { Briefcase, Building2, Calendar, Filter, MapPin, Search, X } from "lucide-react";
 
 export default function PublicOpportunitiesPage() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -152,18 +152,43 @@ export default function PublicOpportunitiesPage() {
     };
   }, [handleObserver]);
 
+  const formatEmploymentType = (type: string) => {
+    const types: Record<string, string> = {
+      FULL_TIME: "Full-time",
+      PART_TIME: "Part-time",
+      CONTRACT: "Contract",
+      INTERNSHIP: "Internship",
+      UNKNOWN: "Unknown",
+    };
+    return types[type] || type;
+  };
+
+  const getDaysUntilDeadline = (dateString: string | null) => {
+    if (!dateString) return null;
+    const deadline = new Date(dateString);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    deadline.setHours(0, 0, 0, 0);
+    const diff = Math.ceil(
+      (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return diff;
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="flex-1 pt-20">
-        <section className="border-b bg-muted/20">
-          <div className="container px-4 py-10">
+        <div className="container px-4 py-10">
+          <div className="space-y-6">
             <FadeIn>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Opportunities</h1>
-                  <p className="text-sm text-muted-foreground">
-                    Browse real opportunities. Sign in to unlock AI tools like cover letters and skill-gap analysis.
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="space-y-1">
+                  <h2 className="text-2xl sm:text-3xl font-semibold tracking-tight">
+                    Opportunities
+                  </h2>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Browse opportunities. Sign in to unlock applying and AI tools.
                   </p>
                 </div>
                 <Button
@@ -178,7 +203,7 @@ export default function PublicOpportunitiesPage() {
             </FadeIn>
 
             <FadeIn delay={0.1}>
-              <div className="mt-6 relative">
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="Search opportunities..."
@@ -191,10 +216,12 @@ export default function PublicOpportunitiesPage() {
 
             {showFilters && (
               <FadeIn delay={0.2}>
-                <Card className="mt-6 border-border/60">
+                <Card className="border-border/60">
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-base font-semibold">Filters</CardTitle>
+                      <CardTitle className="text-base font-semibold">
+                        Filters
+                      </CardTitle>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -253,30 +280,6 @@ export default function PublicOpportunitiesPage() {
                           </Badge>
                         </div>
                       </div>
-
-                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                        <label className="text-sm font-semibold text-foreground whitespace-nowrap shrink-0">
-                          Experience
-                        </label>
-                        <div className="flex flex-wrap gap-2">
-                          {(["STUDENT", "GRADUATE", "JUNIOR", "MID", "SENIOR"] as const).map((lvl) => (
-                            <Badge
-                              key={lvl}
-                              variant={filters.experience_level === lvl ? "default" : "outline"}
-                              className="cursor-pointer hover:bg-muted"
-                              onClick={() =>
-                                setFilters((prev) => ({
-                                  ...prev,
-                                  experience_level: prev.experience_level === lvl ? null : lvl,
-                                }))
-                              }
-                            >
-                              {formatExperienceLevel(lvl)}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
                         <label className="text-sm font-semibold text-foreground whitespace-nowrap shrink-0">
                           Status
@@ -306,99 +309,282 @@ export default function PublicOpportunitiesPage() {
                           >
                             Expired
                           </Badge>
+                          <Badge
+                            variant={filters.status === "ARCHIVED" ? "default" : "outline"}
+                            className="cursor-pointer hover:bg-muted"
+                            onClick={() =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                status: prev.status === "ARCHIVED" ? null : "ARCHIVED",
+                              }))
+                            }
+                          >
+                            Archived
+                          </Badge>
                         </div>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                        <label className="text-sm font-semibold text-foreground whitespace-nowrap shrink-0">
+                          Experience Level
+                        </label>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge
+                            variant={filters.experience_level === "JUNIOR" ? "default" : "outline"}
+                            className="cursor-pointer hover:bg-muted"
+                            onClick={() =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                experience_level:
+                                  prev.experience_level === "JUNIOR" ? null : "JUNIOR",
+                              }))
+                            }
+                          >
+                            Junior
+                          </Badge>
+                          <Badge
+                            variant={filters.experience_level === "MID" ? "default" : "outline"}
+                            className="cursor-pointer hover:bg-muted"
+                            onClick={() =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                experience_level:
+                                  prev.experience_level === "MID" ? null : "MID",
+                              }))
+                            }
+                          >
+                            Mid
+                          </Badge>
+                          <Badge
+                            variant={filters.experience_level === "SENIOR" ? "default" : "outline"}
+                            className="cursor-pointer hover:bg-muted"
+                            onClick={() =>
+                              setFilters((prev) => ({
+                                ...prev,
+                                experience_level:
+                                  prev.experience_level === "SENIOR" ? null : "SENIOR",
+                              }))
+                            }
+                          >
+                            Senior
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4 sm:col-span-2 lg:col-span-1">
+                        <label className="text-sm font-semibold text-foreground whitespace-nowrap shrink-0">
+                          Clear Filters
+                        </label>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setFilters({
+                              is_remote: null,
+                              work_mode: null,
+                              experience_level: null,
+                              status: null,
+                            })
+                          }
+                          className="h-7 px-3 text-xs w-full sm:w-auto"
+                        >
+                          Reset All
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
               </FadeIn>
             )}
-          </div>
-        </section>
 
-        <section className="container px-4 py-10">
-          <FadeIn>
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <div className="text-sm text-muted-foreground">
-                {isLoadingOpportunities ? "Loading..." : `${totalCount.toLocaleString()} results`}
+            {isLoadingOpportunities ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-muted-foreground">Loading opportunities...</div>
               </div>
-              <Button asChild variant="outline" className="border-white/20">
-                <Link href="/#login">Sign in to unlock AI tools</Link>
-              </Button>
-            </div>
-          </FadeIn>
-
-          {error ? (
-            <FadeIn>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Couldn’t load opportunities</CardTitle>
-                  <CardDescription>
-                    Please try again in a moment.
-                  </CardDescription>
-                </CardHeader>
+            ) : error ? (
+              <Card className="border-border/60">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="mb-4 rounded-full bg-destructive/10 p-3">
+                    <Briefcase className="h-6 w-6 text-destructive" />
+                  </div>
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    Failed to load opportunities
+                  </p>
+                  <p className="text-xs font-normal text-muted-foreground">
+                    Please try refreshing the page
+                  </p>
+                </CardContent>
               </Card>
-            </FadeIn>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {opportunities.map((opportunity: Opportunity, idx: number) => (
-                <FadeIn key={opportunity.id} delay={Math.min(0.05 * idx, 0.25)}>
-                  <Link href={`/opportunities/${opportunity.id}`} className="block h-full">
-                    <Card className="h-full transition-all hover:shadow-lg hover:border-border/80 overflow-hidden">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg leading-tight overflow-hidden text-ellipsis line-clamp-2">
-                          {opportunity.title}
-                        </CardTitle>
-                        <CardDescription className="overflow-hidden text-ellipsis whitespace-nowrap">
-                          {opportunity.organization}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-3">
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant="secondary">{formatWorkMode(opportunity.work_mode)}</Badge>
-                          <Badge variant="outline">{formatExperienceLevel(opportunity.experience_level)}</Badge>
-                          {opportunity.is_remote && <Badge variant="default">Remote</Badge>}
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground min-w-0">
-                          <MapPin className="h-4 w-4 shrink-0" />
-                          <span className="truncate min-w-0">
-                            {opportunity.location?.name || "Location not specified"}
-                          </span>
-                        </div>
-
-                        <div className="text-xs text-muted-foreground">
-                          Posted {formatDate(opportunity.created_at) || "Recently"}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                </FadeIn>
-              ))}
-            </div>
-          )}
-
-          <div ref={observerTarget} className="h-8" />
-
-          {isFetchingNextPage && (
-            <div className="mt-8 text-center text-sm text-muted-foreground">Loading more...</div>
-          )}
-
-          {!hasNextPage && opportunities.length > 0 && (
-            <div className="mt-10 text-center text-sm text-muted-foreground">You’ve reached the end.</div>
-          )}
-
-          {!isLoadingOpportunities && opportunities.length === 0 && !error && (
-            <FadeIn>
-              <Card>
-                <CardHeader>
-                  <CardTitle>No results</CardTitle>
-                  <CardDescription>Try adjusting your search or filters.</CardDescription>
-                </CardHeader>
+            ) : opportunities.length === 0 ? (
+              <Card className="border-border/60">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="mb-4 rounded-full bg-muted/50 p-3">
+                    <Briefcase className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm font-normal text-muted-foreground">
+                    No opportunities found. Try adjusting your search or filters.
+                  </p>
+                </CardContent>
               </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {opportunities.map((opportunity: Opportunity, index: number) => {
+                  const daysUntilDeadline = getDaysUntilDeadline(opportunity.deadline);
+
+                  return (
+                    <FadeIn key={opportunity.id} delay={0.1 * (index % 6)}>
+                      <Card className="border-border/60 hover:border-border transition-all cursor-pointer group h-full flex flex-col overflow-hidden">
+                        <Link
+                          href={`/opportunities/${opportunity.id}`}
+                          className="block h-full overflow-hidden"
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex-1 min-w-0">
+                                <CardTitle className="text-base font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                                  {opportunity.title}
+                                </CardTitle>
+                                {opportunity.organization && (
+                                  <div className="flex items-center gap-1.5 mt-1.5">
+                                    <Building2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                    <span className="text-xs text-muted-foreground truncate">
+                                      {opportunity.organization}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <Badge
+                                variant="secondary"
+                                className="flex-shrink-0 text-xs max-w-[10rem] truncate"
+                              >
+                                {opportunity.op_type.name}
+                              </Badge>
+                            </div>
+                            <CardDescription className="text-xs line-clamp-2">
+                              {opportunity.description_en || "No description available"}
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-0 flex-1 flex flex-col">
+                            <div className="space-y-2 flex-1">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                {opportunity.is_remote ? (
+                                  <>
+                                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span>Remote</span>
+                                  </>
+                                ) : opportunity.location ? (
+                                  <>
+                                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                                    <span className="truncate">
+                                      {opportunity.location.name}
+                                      {opportunity.location.parent &&
+                                        `, ${opportunity.location.parent.name}`}
+                                    </span>
+                                  </>
+                                ) : null}
+                                {!opportunity.is_remote &&
+                                  opportunity.work_mode !== "UNKNOWN" && (
+                                    <span className="text-muted-foreground/60">•</span>
+                                  )}
+                                {opportunity.work_mode !== "UNKNOWN" &&
+                                  !opportunity.is_remote && (
+                                    <span>{formatWorkMode(opportunity.work_mode)}</span>
+                                  )}
+                              </div>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {opportunity.employment_type !== "UNKNOWN" && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {formatEmploymentType(opportunity.employment_type)}
+                                  </Badge>
+                                )}
+                                {opportunity.experience_level !== "UNKNOWN" && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {formatExperienceLevel(opportunity.experience_level)}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              {opportunity.deadline && (
+                                <div className="flex items-center gap-1.5 text-xs">
+                                  <Calendar className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+                                  <span className="text-muted-foreground">
+                                    Deadline: {formatDate(opportunity.deadline)}
+                                  </span>
+                                  {daysUntilDeadline !== null && (
+                                    <>
+                                      {daysUntilDeadline < 0 ? (
+                                        <Badge
+                                          variant="destructive"
+                                          className="text-xs ml-auto"
+                                        >
+                                          Expired
+                                        </Badge>
+                                      ) : daysUntilDeadline <= 7 ? (
+                                        <Badge
+                                          variant="destructive"
+                                          className="text-xs ml-auto"
+                                        >
+                                          {daysUntilDeadline}d left
+                                        </Badge>
+                                      ) : daysUntilDeadline <= 30 ? (
+                                        <Badge
+                                          variant="secondary"
+                                          className="text-xs ml-auto"
+                                        >
+                                          {daysUntilDeadline}d left
+                                        </Badge>
+                                      ) : null}
+                                    </>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="mt-3 pt-3 border-t border-border/60">
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <span className="truncate">
+                                  {opportunity.domain.name}
+                                  {opportunity.specialization.name !== opportunity.domain.name &&
+                                    ` • ${opportunity.specialization.name}`}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Link>
+                      </Card>
+                    </FadeIn>
+                  );
+                })}
+              </div>
+            )}
+
+            <div ref={observerTarget} className="h-8" />
+
+            {isFetchingNextPage && (
+              <div className="mt-8 text-center text-sm text-muted-foreground">
+                Loading more...
+              </div>
+            )}
+
+            {!hasNextPage && opportunities.length > 0 && (
+              <div className="mt-10 text-center text-sm text-muted-foreground">
+                You’ve reached the end.
+              </div>
+            )}
+
+            <FadeIn>
+              <div className="mt-2 flex items-center justify-between gap-4">
+                <div className="text-sm text-muted-foreground">
+                  {isLoadingOpportunities
+                    ? "Loading..."
+                    : `${totalCount.toLocaleString()} results`}
+                </div>
+                <Button asChild variant="outline" className="border-white/20">
+                  <Link href="/#login">Sign in to unlock AI tools</Link>
+                </Button>
+              </div>
             </FadeIn>
-          )}
-        </section>
+          </div>
+        </div>
       </main>
     </div>
   );
