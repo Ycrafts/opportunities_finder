@@ -240,15 +240,15 @@ export default function MatchesPage() {
                       <CardContent className="p-0">
                         <Link
                           href={`/dashboard/opportunities/${match.opportunity.id}`}
-                          className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between"
+                          className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between overflow-hidden"
                         >
-                          <div className="space-y-2">
+                          <div className="space-y-2 min-w-0">
                             <div className="flex items-start gap-3">
-                              <div className="space-y-1">
-                                <h3 className="text-base font-semibold">
+                              <div className="space-y-1 min-w-0">
+                                <h3 className="text-base font-semibold line-clamp-2">
                                   {match.opportunity.title}
                                 </h3>
-                                <p className="text-sm text-muted-foreground">
+                                <p className="text-sm text-muted-foreground truncate">
                                   {match.opportunity.organization || "Organization unknown"}
                                 </p>
                               </div>

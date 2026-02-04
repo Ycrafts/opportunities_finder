@@ -534,8 +534,8 @@ export default function OpportunitiesPage() {
 
               return (
                 <FadeIn key={opportunity.id} delay={0.1 * (index % 6)}>
-                  <Card className="border-border/60 hover:border-border transition-all cursor-pointer group h-full flex flex-col">
-                    <Link href={`/dashboard/opportunities/${opportunity.id}`}>
+                  <Card className="border-border/60 hover:border-border transition-all cursor-pointer group h-full flex flex-col overflow-hidden">
+                    <Link href={`/dashboard/opportunities/${opportunity.id}`} className="block h-full overflow-hidden">
                       <CardHeader className="pb-3">
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex-1 min-w-0">
@@ -553,7 +553,7 @@ export default function OpportunitiesPage() {
                           </div>
                           <Badge
                             variant="secondary"
-                            className="flex-shrink-0 text-xs"
+                            className="flex-shrink-0 text-xs max-w-[10rem] truncate"
                           >
                             {opportunity.op_type.name}
                           </Badge>
@@ -618,7 +618,7 @@ export default function OpportunitiesPage() {
                           {compensation && (
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                               <DollarSign className="h-3.5 w-3.5 flex-shrink-0" />
-                              <span>{compensation}</span>
+                              <span className="truncate">{compensation}</span>
                             </div>
                           )}
 
