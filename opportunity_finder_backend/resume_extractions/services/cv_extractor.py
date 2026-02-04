@@ -91,6 +91,7 @@ class CVExtractionService:
 INSTRUCTIONS:
 - Extract factual information only - do not make assumptions
 - Leave fields empty if information is not present
+- Try to extract the candidate's full name if present
 - For academic_info, include degree, institution, graduation year, and GPA if available
 - For skills, list technical skills, programming languages, tools, etc.
 - For experience, include job titles, companies, dates, and brief descriptions
@@ -162,6 +163,7 @@ Return the extracted information in the specified JSON format."""
                 "contact_info": {
                     "type": "object",
                     "properties": {
+                        "full_name": {"type": "string"},
                         "email": {"type": "string"},
                         "phone": {"type": "string"},
                         "location": {"type": "string"}
@@ -193,6 +195,15 @@ Return the extracted information in the specified JSON format."""
 
             # Extract structured data with AI
             extracted_data = self.extract_profile_data(extracted_text, session)
+
+            contact = extracted_data.get("contact_info") or {}
+            full_name = (
+                extracted_data.get("full_name")
+                or contact.get("full_name")
+                or ""
+            )
+            if full_name:
+                session.extracted_full_name = str(full_name).strip()
 
             # Update session with results
             session.academic_info = extracted_data.get("academic_info", {})

@@ -27,6 +27,8 @@ class CVExtractionSession(models.Model):
     # Extracted content
     extracted_text = models.TextField(blank=True, default="")
 
+    extracted_full_name = models.CharField(max_length=255, blank=True, default="")
+
     # AI-parsed structured data
     academic_info = models.JSONField(blank=True, default=dict)
     skills = models.JSONField(blank=True, default=list)
@@ -55,6 +57,7 @@ class CVExtractionSession(models.Model):
     def get_extracted_profile_data(self) -> dict:
         """Returns the extracted data in the format expected by UserProfile."""
         return {
+            "full_name": self.extracted_full_name,
             "academic_info": self.academic_info,
             "skills": self.skills,
             "interests": self.interests,

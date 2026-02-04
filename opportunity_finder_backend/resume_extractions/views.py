@@ -175,11 +175,10 @@ class ApplyExtractionToProfileView(generics.UpdateAPIView):
             if value:  # Only update if we have extracted data
                 setattr(profile, field, value)
 
-        # Update CV text and file if not already set
-        if not profile.cv_text and session.extracted_text:
+        if session.extracted_text:
             profile.cv_text = session.extracted_text
 
-        if not profile.cv_file and session.cv_file:
+        if session.cv_file:
             profile.cv_file = session.cv_file
 
         profile.save()

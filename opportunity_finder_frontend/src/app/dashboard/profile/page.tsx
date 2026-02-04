@@ -186,7 +186,7 @@ export default function ProfilePage() {
                   Get Started with Your Profile
                 </CardTitle>
                 <CardDescription>
-                  Upload your CV to automatically fill out your profile information
+                  Upload your CV to auto-fill your profile.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -250,6 +250,26 @@ export default function ProfilePage() {
                   cvFile={cvFile}
                   setCvFile={setCvFile}
                   onSave={(data) => {
+                    const maybeFile = data.cv_file;
+                    if (maybeFile instanceof File) {
+                      const { cv_file, ...rest } = data;
+                      updateMutation
+                        .mutateAsync(rest)
+                        .then(() => cvExtractionApi.uploadCV(maybeFile, false))
+                        .then((session) => {
+                          toast.success("CV uploaded successfully. Extraction in progress...");
+                          queryClient.invalidateQueries({ queryKey: ["cv-sessions"] });
+                          setPendingSession(session);
+                          setIsEditing(false);
+                          setCvFile(null);
+                        })
+                        .catch((error) => {
+                          const apiError = cvExtractionApi.extractError(error);
+                          toast.error(apiError.detail || apiError.cv_file?.[0] || "Failed to upload CV");
+                        });
+                      return;
+                    }
+
                     updateMutation.mutate(data);
                   }}
                   onCancel={() => {
@@ -964,7 +984,7 @@ function ProfileEditForm({
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="cv_file">Upload CV (PDF or DOCX)</Label>
+              <Label htmlFor="cv_file">Upload your CV to auto-fill your profile.</Label>
               <Input
                 id="cv_file"
                 type="file"
