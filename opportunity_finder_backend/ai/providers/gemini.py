@@ -3,6 +3,7 @@ from __future__ import annotations
 import http.client
 import json
 import random
+import re
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -14,6 +15,37 @@ from django.conf import settings
 from ai.contracts import AIJSONResult, AITextResult, BaseAIProvider, JSONSchema
 from ai.errors import AIConfigurationError, AIPermanentError, AITransientError
 from ai_usage.services import AIUsageTracker, AICallTimer
+
+
+class _TokenBucket:
+    def __init__(self, rate_per_second: float, capacity: float):
+        self.rate_per_second = max(float(rate_per_second), 0.0)
+        self.capacity = max(float(capacity), 1.0)
+        self.tokens = self.capacity
+        self.updated_at = time.monotonic()
+
+    def wait_for_token(self) -> None:
+        if self.rate_per_second <= 0:
+            return
+
+        while True:
+            now = time.monotonic()
+            elapsed = max(0.0, now - self.updated_at)
+            if elapsed:
+                self.tokens = min(self.capacity, self.tokens + elapsed * self.rate_per_second)
+                self.updated_at = now
+
+            if self.tokens >= 1.0:
+                self.tokens -= 1.0
+                return
+
+            needed = 1.0 - self.tokens
+            sleep_s = max(0.05, needed / self.rate_per_second)
+            time.sleep(min(sleep_s, 2.0))
+
+
+_GLOBAL_BUCKET: _TokenBucket | None = None
+_GLOBAL_COOLDOWN_UNTIL: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -40,6 +72,13 @@ class GeminiAIProvider(BaseAIProvider):
         self._exhausted_keys: set[str] = set()
         # Current key index for round-robin fallback
         self._current_key_index = 0
+
+        global _GLOBAL_BUCKET
+        if _GLOBAL_BUCKET is None:
+            rpm = float(getattr(settings, "GEMINI_RPM_LIMIT", 15) or 0)
+            rps = max(rpm / 60.0, 0.0)
+            # Capacity ~1 minute burst at configured rpm.
+            _GLOBAL_BUCKET = _TokenBucket(rate_per_second=rps, capacity=max(rpm, 1.0))
 
     def _load_config(self) -> GeminiConfig:
         # Support both single key (backwards compatibility) and multiple keys
@@ -177,6 +216,27 @@ class GeminiAIProvider(BaseAIProvider):
         tried_keys: set[str] = set()
         last_exc: Exception | None = None
 
+        global _GLOBAL_COOLDOWN_UNTIL
+
+        def _wait_global_throttle() -> None:
+            # Enforce cooldown if we recently got a 429 from Gemini.
+            now = time.time()
+            if _GLOBAL_COOLDOWN_UNTIL > now:
+                time.sleep(max(0.0, _GLOBAL_COOLDOWN_UNTIL - now))
+            if _GLOBAL_BUCKET is not None:
+                _GLOBAL_BUCKET.wait_for_token()
+
+        def _extract_retry_after_seconds(err_body: str) -> float | None:
+            if not err_body:
+                return None
+            m = re.search(r"retry in\s+([0-9]+(?:\.[0-9]+)?)s", err_body, flags=re.IGNORECASE)
+            if not m:
+                return None
+            try:
+                return float(m.group(1))
+            except Exception:
+                return None
+
         while True:
             try:
                 api_key = self._get_next_api_key()
@@ -194,6 +254,9 @@ class GeminiAIProvider(BaseAIProvider):
                 raise AIPermanentError("No Gemini API keys available")
 
             tried_keys.add(api_key)
+
+            # Global pacing to prevent bursts that trigger free-tier 429s.
+            _wait_global_throttle()
 
             req = Request(
                 self._endpoint(model=model, api_key=api_key),
@@ -237,10 +300,18 @@ class GeminiAIProvider(BaseAIProvider):
                     )
 
                     if is_quota_error:
-                        # Mark this key as exhausted and try next key
-                        self._mark_key_exhausted(api_key)
-                        last_exc = AITransientError(f"Gemini key exhausted ({len(tried_keys)}/{len(self.cfg.api_keys)} keys tried): {msg}")
-                        break  # Break retry loop, try next key
+                        # Free tier quota/rate limiting is often shared across keys in the same project/account.
+                        # Rotating keys on 429 just thrashes and increases failures.
+                        retry_after = _extract_retry_after_seconds(err_body)
+                        cooldown = float(getattr(settings, "GEMINI_429_COOLDOWN_SECONDS", 60) or 60)
+                        wait_s = retry_after if retry_after is not None else cooldown
+                        _GLOBAL_COOLDOWN_UNTIL = max(_GLOBAL_COOLDOWN_UNTIL, time.time() + max(0.0, float(wait_s)))
+
+                        last_exc = AITransientError(
+                            f"Gemini rate limited/quota exceeded. Backing off for ~{wait_s:.1f}s. {msg}"
+                        )
+                        # Stop here so callers (cron tasks) can retry later, instead of burning all keys.
+                        raise last_exc from e
 
                     # Other retryable errors: 5xx
                     if status >= 500:
