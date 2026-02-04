@@ -3,6 +3,8 @@ from __future__ import annotations
 from celery import shared_task
 
 from ai.errors import AITransientError
+from django.conf import settings
+from django.db.models import Q
 from opportunities.models import RawOpportunity
 from processing.services.extractor import RawOpportunityExtractor
 
@@ -42,21 +44,34 @@ def process_pending_raw(self=None, limit: int = 25) -> dict:
     processing the same raw opportunities concurrently.
     """
     from django.db import transaction
+    from django.utils import timezone
 
     ids = []
     with transaction.atomic():
+        reclaim_minutes = int(getattr(settings, "RAW_PROCESSING_RECLAIM_MINUTES", 30) or 30)
+        reclaim_cutoff = timezone.now() - timezone.timedelta(minutes=max(0, reclaim_minutes))
+
         # Lock and claim raw opportunities by setting status to PROCESSING
         raws = RawOpportunity.objects.select_for_update().filter(
-            status__in=[RawOpportunity.ProcessingStatus.NEW, RawOpportunity.ProcessingStatus.TRANSLATED]
-        ).order_by("id")[:int(limit or 0)]
+            Q(
+                status__in=[
+                    RawOpportunity.ProcessingStatus.NEW,
+                    RawOpportunity.ProcessingStatus.TRANSLATED,
+                ]
+            )
+            |
+            Q(
+                status=RawOpportunity.ProcessingStatus.PROCESSING,
+                updated_at__lte=reclaim_cutoff,
+            )
+        ).order_by("id")[: int(limit or 0)]
 
         for raw in raws:
-            # Update status immediately to prevent other tasks from claiming it
-            raw.status = RawOpportunity.ProcessingStatus.PROCESSING
-            raw.save(update_fields=['status'])
+            if raw.status != RawOpportunity.ProcessingStatus.PROCESSING:
+                # Update status immediately to prevent other tasks from claiming it
+                raw.status = RawOpportunity.ProcessingStatus.PROCESSING
+                raw.save(update_fields=['status'])
             ids.append(raw.id)
-
-    from django.conf import settings
 
     # Queue processing tasks outside the transaction
     processed = 0

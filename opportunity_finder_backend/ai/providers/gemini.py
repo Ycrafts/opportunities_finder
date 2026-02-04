@@ -328,13 +328,15 @@ class GeminiAIProvider(BaseAIProvider):
                     time.sleep(delay)
                 try:
                     # A single shared lock prevents aggregate bursts across gunicorn workers/threads.
-                    # We hold the lock through the request so only one Gemini call is in-flight at a time.
+                    # IMPORTANT: do NOT hold the lock while the HTTP request is in-flight; a slow/failed
+                    # request would block all other Gemini calls across workers.
                     with _AdvisoryLock(_GEMINI_RATE_LOCK_KEY):
                         _wait_global_throttle()
-                        with urlopen(req, timeout=self.cfg.timeout_seconds) as resp:
-                            raw = resp.read().decode("utf-8")
-                            response_data = json.loads(raw) if raw else {}
-                            return response_data, current_api_key_identifier
+
+                    with urlopen(req, timeout=self.cfg.timeout_seconds) as resp:
+                        raw = resp.read().decode("utf-8")
+                        response_data = json.loads(raw) if raw else {}
+                        return response_data, current_api_key_identifier
                 except HTTPError as e:
                     # Read response body for debugging (without leaking key)
                     try:
