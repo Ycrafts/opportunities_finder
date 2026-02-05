@@ -259,13 +259,22 @@ export default function ProfilePage() {
                         .then((session) => {
                           toast.success("CV uploaded successfully. Extraction in progress...");
                           queryClient.invalidateQueries({ queryKey: ["cv-sessions"] });
+                          queryClient.invalidateQueries({ queryKey: ["profile"] });
                           setPendingSession(session);
                           setIsEditing(false);
                           setCvFile(null);
                         })
-                        .catch((error) => {
-                          const apiError = cvExtractionApi.extractError(error);
-                          toast.error(apiError.detail || apiError.cv_file?.[0] || "Failed to upload CV");
+                        .catch((error: any) => {
+                          const code = error?.response?.data?.code;
+                          const upgradeUrl = error?.response?.data?.upgrade_url;
+                          const message =
+                            error?.response?.data?.error ||
+                            error?.response?.data?.detail ||
+                            "Failed to upload CV";
+                          toast.error(message);
+                          if (code === "premium_required" && upgradeUrl) {
+                            router.push(upgradeUrl);
+                          }
                         });
                       return;
                     }

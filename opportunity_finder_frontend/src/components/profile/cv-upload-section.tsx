@@ -22,6 +22,7 @@ import { cvExtractionApi, type CVExtractionSession, type CVExtractionStatus } fr
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { FadeIn } from "@/components/animations/fade-in";
+import { useRouter } from "next/navigation";
 
 interface CVUploadSectionProps {
   onApplied?: () => void;
@@ -29,6 +30,7 @@ interface CVUploadSectionProps {
 }
 
 export function CVUploadSection({ onApplied, initialSession }: CVUploadSectionProps) {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [session, setSession] = useState<CVExtractionSession | null>(initialSession || null);
   const [isReviewing, setIsReviewing] = useState(initialSession?.status === "COMPLETED" || false);
@@ -96,8 +98,13 @@ export function CVUploadSection({ onApplied, initialSession }: CVUploadSectionPr
       }
     },
     onError: (error) => {
+      const code = (error as any)?.response?.data?.code;
+      const upgradeUrl = (error as any)?.response?.data?.upgrade_url;
       const apiError = cvExtractionApi.extractError(error);
       toast.error(apiError.detail || apiError.cv_file?.[0] || "Failed to upload CV");
+      if (code === "premium_required" && upgradeUrl) {
+        router.push(upgradeUrl);
+      }
     },
   });
 
