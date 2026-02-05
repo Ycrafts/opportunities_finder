@@ -5,6 +5,8 @@ from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from accounts.feature_gating import enforce_standard_daily_limit
+
 from .models import SkillGapAnalysis
 from .serializers import (
     SkillGapAnalysisCreateSerializer,
@@ -60,6 +62,14 @@ class SkillGapAnalysisCreateView(generics.CreateAPIView):
 
         opportunity_id = serializer.validated_data["opportunity_id"]
         user = request.user
+
+        limit_response = enforce_standard_daily_limit(
+            user=user,
+            model=SkillGapAnalysis,
+            feature_label="skill gap analysis",
+        )
+        if limit_response is not None:
+            return limit_response
 
         # Validate opportunity exists and user can access it
         try:

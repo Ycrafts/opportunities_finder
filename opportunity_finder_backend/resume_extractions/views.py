@@ -4,6 +4,8 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from accounts.feature_gating import enforce_standard_daily_limit
+
 from .models import CVExtractionSession
 from .serializers import CVUploadSerializer, CVExtractionResultSerializer, CVExtractionSessionSerializer
 from .services.cv_extractor import CVExtractionService
@@ -28,6 +30,14 @@ class CVUploadView(generics.CreateAPIView):
         cv_file = serializer.validated_data['cv_file']
         user = request.user
         sync_processing = request.query_params.get('sync', '').lower() == 'true'
+
+        limit_response = enforce_standard_daily_limit(
+            user=user,
+            model=CVExtractionSession,
+            feature_label="CV extraction",
+        )
+        if limit_response is not None:
+            return limit_response
 
         # Create extraction session
         session = CVExtractionSession.objects.create(
