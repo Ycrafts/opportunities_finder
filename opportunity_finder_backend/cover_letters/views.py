@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.feature_gating import enforce_standard_daily_limit
+from ai.errors import sanitize_ai_error_message
 
 from .models import CoverLetter
 from .serializers import (
@@ -175,7 +176,7 @@ class CoverLetterGenerateView(generics.CreateAPIView):
             cover_letter.save(update_fields=["generated_content", "status"])
         except Exception as e:
             cover_letter.status = CoverLetter.Status.FAILED
-            cover_letter.error_message = str(e)
+            cover_letter.error_message = sanitize_ai_error_message(e)
             cover_letter.save(update_fields=["status", "error_message"])
             return Response({"error": "Failed to generate cover letter."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

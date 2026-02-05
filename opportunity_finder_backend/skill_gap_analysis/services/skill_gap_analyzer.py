@@ -8,7 +8,7 @@ providing detailed recommendations for skill development.
 import json
 from typing import Any, Dict, List
 
-from ai.errors import AIError, AITransientError, AIPermanentError
+from ai.errors import AIError, AITransientError, AIPermanentError, sanitize_ai_error_message
 from ai.router import get_provider_chain_names, get_provider_by_name
 from opportunities.models import Opportunity
 from profiles.models import UserProfile
@@ -84,12 +84,9 @@ class SkillGapAnalyzer:
                     first_permanent = e
                 continue
 
-        # If all providers failed, return basic analysis
-        error_msg = "AI analysis failed"
-        if last_transient:
-            error_msg += f": {last_transient}"
-        elif first_permanent:
-            error_msg += f": {first_permanent}"
+        # If all providers failed, return basic analysis.
+        # Do not leak upstream/provider details to end users.
+        error_msg = sanitize_ai_error_message(last_transient or first_permanent)
 
         return {
             "missing_skills": [],

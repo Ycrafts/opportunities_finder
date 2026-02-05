@@ -1,5 +1,7 @@
 from celery import shared_task
 
+from ai.errors import sanitize_ai_error_message
+
 from .models import CoverLetter
 from .services.cover_letter_generator import CoverLetterGenerator
 
@@ -58,7 +60,7 @@ def generate_cover_letter_task(self, user_id: int, opportunity_id: int, version:
                 version=version
             ).update(
                 status=CoverLetter.Status.FAILED,
-                error_message=str(e)
+                error_message=sanitize_ai_error_message(e)
             )
         except:
             pass  # Ignore if record doesn't exist yet

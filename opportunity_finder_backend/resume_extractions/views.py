@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.feature_gating import enforce_standard_daily_limit
+from ai.errors import sanitize_ai_error_message
 
 from .models import CVExtractionSession
 from .serializers import CVUploadSerializer, CVExtractionResultSerializer, CVExtractionSessionSerializer
@@ -59,7 +60,7 @@ class CVUploadView(generics.CreateAPIView):
             except Exception as e:
                 # If sync processing fails, mark as failed
                 session.status = CVExtractionSession.Status.FAILED
-                session.error_message = str(e)
+                session.error_message = sanitize_ai_error_message(e)
                 session.save()
         else:
             # Start extraction asynchronously
