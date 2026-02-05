@@ -70,6 +70,13 @@ class CoverLetterGenerateView(generics.CreateAPIView):
             user=user,
             model=CoverLetter,
             feature_label="cover letter generation",
+            queryset_filter=lambda qs: qs.filter(
+                status__in=[
+                    CoverLetter.Status.GENERATED,
+                    CoverLetter.Status.EDITED,
+                    CoverLetter.Status.FINALIZED,
+                ]
+            ),
         )
         if limit_response is not None:
             return limit_response

@@ -35,6 +35,7 @@ class CVUploadView(generics.CreateAPIView):
             user=user,
             model=CVExtractionSession,
             feature_label="CV extraction",
+            queryset_filter=lambda qs: qs.filter(status=CVExtractionSession.Status.COMPLETED),
         )
         if limit_response is not None:
             return limit_response

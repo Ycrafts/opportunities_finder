@@ -67,6 +67,7 @@ class SkillGapAnalysisCreateView(generics.CreateAPIView):
             user=user,
             model=SkillGapAnalysis,
             feature_label="skill gap analysis",
+            queryset_filter=lambda qs: qs.filter(status=SkillGapAnalysis.Status.COMPLETED),
         )
         if limit_response is not None:
             return limit_response
