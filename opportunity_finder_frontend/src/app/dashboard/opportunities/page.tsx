@@ -127,9 +127,7 @@ export default function OpportunitiesPage() {
       return true;
     });
 
-    return [...deduped].sort(
-      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
+    return deduped;
   }, [data]);
   const totalCount = data?.pages[0]?.count || 0;
 

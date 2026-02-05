@@ -1,4 +1,5 @@
-from django.db.models import Q
+from django.db.models import Case, DateTimeField, IntegerField, Q, Value, When
+from django.db.models.functions import Coalesce
 from rest_framework import generics, permissions
 
 from .models import Domain, Location, Opportunity, OpportunityType, Specialization
@@ -64,7 +65,19 @@ class OpportunityListView(generics.ListAPIView):
         if status_:
             qs = qs.filter(status=status_)
 
-        return qs.order_by("-created_at")
+        expired_last = Case(
+            When(status=Opportunity.Status.EXPIRED, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+        extracted_at = Coalesce(
+            "raw__published_at",
+            "raw__ingested_at",
+            "created_at",
+            output_field=DateTimeField(),
+        )
+
+        return qs.order_by(expired_last, extracted_at.desc(), "-created_at")
 
 
 class OpportunityDetailView(generics.RetrieveAPIView):

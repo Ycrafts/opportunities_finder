@@ -355,20 +355,6 @@ export default function OpportunityDetailPage() {
     const intent = searchParams?.get("intent");
     if (!intent) return;
 
-    if (intent === "cover_letter") {
-      if (!generateCoverLetterMutation.isPending) {
-        generateCoverLetterMutation.mutate();
-      }
-    } else if (intent === "skill_gap") {
-      if (!analyzeSkillGapMutation.isPending) {
-        analyzeSkillGapMutation.mutate();
-      }
-    } else if (intent === "apply") {
-      if (opportunity.source_url) {
-        window.open(opportunity.source_url, "_blank", "noopener,noreferrer");
-      }
-    }
-
     const next = new URL(window.location.href);
     next.searchParams.delete("intent");
     router.replace(next.pathname + next.search);
@@ -418,18 +404,18 @@ export default function OpportunityDetailPage() {
   return (
     <DashboardLayout navItems={navItems}>
       <div className="space-y-6 max-w-5xl">
-        <FadeIn>
-          <Card>
-            <CardHeader className="space-y-5">
-              <Button
-                variant="ghost"
-                className="gap-2 px-0 text-muted-foreground hover:text-foreground w-fit"
-                onClick={() => router.back()}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back to Opportunities
-              </Button>
-              <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
+        <div className="grid gap-6 lg:grid-cols-[1fr_18rem] lg:items-start">
+          <FadeIn>
+            <Card>
+              <CardHeader className="space-y-5">
+                <Button
+                  variant="ghost"
+                  className="gap-2 px-0 text-muted-foreground hover:text-foreground w-fit"
+                  onClick={() => router.back()}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back to Opportunities
+                </Button>
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-start gap-3">
                     <CardTitle className="text-2xl sm:text-3xl font-semibold flex-1">
@@ -451,124 +437,81 @@ export default function OpportunityDetailPage() {
                       ` • ${opportunity.specialization.name}`}
                   </CardDescription>
                 </div>
-                <div className="flex flex-col gap-2 w-full md:w-56">
-                  {opportunity.op_type.name === "JOB" && (
-                    <Button
-                      variant="default"
-                      className="gap-2 w-full"
-                      disabled={generateCoverLetterMutation.isPending}
-                      onClick={() => generateCoverLetterMutation.mutate()}
-                    >
-                      {generateCoverLetterMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <FileText className="h-4 w-4" />
-                      )}
-                      Generate Cover Letter
-                    </Button>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex flex-wrap gap-3 text-sm">
+                  {opportunity.is_remote ? (
+                    <Badge variant="outline" className="gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Remote
+                    </Badge>
+                  ) : opportunity.location ? (
+                    <Badge variant="outline" className="gap-2">
+                      <MapPin className="h-4 w-4" />
+                      {opportunity.location.name}
+                      {opportunity.location.parent &&
+                        `, ${opportunity.location.parent.name}`}
+                    </Badge>
+                  ) : null}
+                  {opportunity.work_mode !== "UNKNOWN" && (
+                    <Badge variant="outline">
+                      {formatWorkMode(opportunity.work_mode)}
+                    </Badge>
                   )}
-                  <Button
-                    variant="outline"
-                    className="gap-2 w-full"
-                    disabled={analyzeSkillGapMutation.isPending}
-                    onClick={() => analyzeSkillGapMutation.mutate()}
-                  >
-                    {analyzeSkillGapMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Target className="h-4 w-4" />
-                    )}
-                    Skill Gap Analysis
-                  </Button>
-                  {opportunity.source_url && (
-                    <Button asChild variant="outline" className="gap-2 w-full">
-                      <a
-                        href={opportunity.source_url}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Apply
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    </Button>
+                  {opportunity.employment_type !== "UNKNOWN" && (
+                    <Badge variant="outline">
+                      {formatEmploymentType(opportunity.employment_type)}
+                    </Badge>
+                  )}
+                  {opportunity.experience_level !== "UNKNOWN" && (
+                    <Badge variant="outline">
+                      {formatExperienceLevel(opportunity.experience_level)}
+                    </Badge>
                   )}
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-wrap gap-3 text-sm">
-                {opportunity.is_remote ? (
-                  <Badge variant="outline" className="gap-2">
-                    <MapPin className="h-4 w-4" />
-                    Remote
-                  </Badge>
-                ) : opportunity.location ? (
-                  <Badge variant="outline" className="gap-2">
-                    <MapPin className="h-4 w-4" />
-                    {opportunity.location.name}
-                    {opportunity.location.parent &&
-                      `, ${opportunity.location.parent.name}`}
-                  </Badge>
-                ) : null}
-                {opportunity.work_mode !== "UNKNOWN" && (
-                  <Badge variant="outline">
-                    {formatWorkMode(opportunity.work_mode)}
-                  </Badge>
-                )}
-                {opportunity.employment_type !== "UNKNOWN" && (
-                  <Badge variant="outline">
-                    {formatEmploymentType(opportunity.employment_type)}
-                  </Badge>
-                )}
-                {opportunity.experience_level !== "UNKNOWN" && (
-                  <Badge variant="outline">
-                    {formatExperienceLevel(opportunity.experience_level)}
-                  </Badge>
-                )}
-              </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                {compensation && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-muted-foreground text-xs">ETB</span>
-                    <span>{compensation.replace("ETB ", "")}</span>
-                  </div>
-                )}
-                {opportunity.deadline && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>Deadline: {formatDate(opportunity.deadline)}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="border-t pt-4">
-                <h3 className="text-sm font-semibold mb-2">Description</h3>
-                <p className="text-sm text-muted-foreground whitespace-pre-line">
-                  {opportunity.description_en || "No description provided."}
-                </p>
-              </div>
-              {opportunity.op_type.name === "JOB" && (
-                <div className="border-t pt-4 space-y-3">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-xs font-semibold uppercase tracking-wide">
-                      Skill gap analysis
-                    </h3>
-                    {skillGapAnalysisDetail?.status && (
-                      <Badge variant="outline" className="text-[10px] h-5">
-                        {skillGapAnalysisDetail.status}
-                      </Badge>
-                    )}
-                  </div>
-                  {isLoadingSkillGapAnalyses ||
-                  isLoadingSkillGapAnalysisDetail ||
-                  skillGapAnalysisDetail?.status === "GENERATING" ? (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Generating skill gap analysis...
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {compensation && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-muted-foreground text-xs">ETB</span>
+                      <span>{compensation.replace("ETB ", "")}</span>
                     </div>
-                  ) : skillGapAnalysisDetail ? (
-                    <div className="space-y-3 text-xs">
+                  )}
+                  {opportunity.deadline && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span>Deadline: {formatDate(opportunity.deadline)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t pt-4">
+                  <h3 className="text-sm font-semibold mb-2">Description</h3>
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">
+                    {opportunity.description_en || "No description provided."}
+                  </p>
+                </div>
+                {opportunity.op_type.name === "JOB" && (
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-xs font-semibold uppercase tracking-wide">
+                        Skill gap analysis
+                      </h3>
+                      {skillGapAnalysisDetail?.status && (
+                        <Badge variant="outline" className="text-[10px] h-5">
+                          {skillGapAnalysisDetail.status}
+                        </Badge>
+                      )}
+                    </div>
+                    {isLoadingSkillGapAnalyses ||
+                    isLoadingSkillGapAnalysisDetail ||
+                    skillGapAnalysisDetail?.status === "GENERATING" ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Generating skill gap analysis...
+                      </div>
+                    ) : skillGapAnalysisDetail ? (
+                      <div className="space-y-3 text-xs">
                       {skillGapAnalysisDetail.error_message && (
                         <p className="text-destructive text-xs">
                           {skillGapAnalysisDetail.error_message}
@@ -740,8 +683,62 @@ export default function OpportunityDetailPage() {
                 </div>
               )}
             </CardContent>
-          </Card>
-        </FadeIn>
+            </Card>
+          </FadeIn>
+
+          <FadeIn delay={0.05}>
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="text-base">Actions</CardTitle>
+                <CardDescription>
+                  Generate a cover letter, analyze gaps, or apply.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {opportunity.op_type.name === "JOB" && (
+                  <Button
+                    variant="default"
+                    className="gap-2 w-full"
+                    disabled={generateCoverLetterMutation.isPending}
+                    onClick={() => generateCoverLetterMutation.mutate()}
+                  >
+                    {generateCoverLetterMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4" />
+                    )}
+                    Generate Cover Letter
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  className="gap-2 w-full"
+                  disabled={analyzeSkillGapMutation.isPending}
+                  onClick={() => analyzeSkillGapMutation.mutate()}
+                >
+                  {analyzeSkillGapMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Target className="h-4 w-4" />
+                  )}
+                  Skill Gap Analysis
+                </Button>
+                {opportunity.source_url && (
+                  <Button asChild variant="outline" className="gap-2 w-full">
+                    <a
+                      href={opportunity.source_url}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Apply
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </FadeIn>
+        </div>
       </div>
     </DashboardLayout>
   );

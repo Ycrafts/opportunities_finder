@@ -100,7 +100,7 @@ export default function PublicOpportunityDetailPage() {
 
   const redirectToAuthFor = (intent: "apply" | "cover_letter" | "skill_gap") => {
     if (Number.isFinite(opportunityId)) {
-      const next = `/dashboard/opportunities/${opportunityId}?intent=${encodeURIComponent(intent)}`;
+      const next = `/dashboard/opportunities/${opportunityId}`;
       setPostAuthRedirect(next);
     }
     const hash = intent === "apply" ? "#login" : "#get-started";
@@ -152,7 +152,7 @@ export default function PublicOpportunityDetailPage() {
       <Header />
       <main className="flex-1 pt-20">
         <div className="container px-4 py-10">
-          <div className="space-y-6 max-w-5xl">
+          <div className="grid gap-6 lg:grid-cols-[1fr_22rem] lg:items-start">
             <FadeIn>
               <Card>
                 <CardHeader className="space-y-5">
@@ -166,61 +166,26 @@ export default function PublicOpportunityDetailPage() {
                       Back to Opportunities
                     </Link>
                   </Button>
-                  <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-start">
-                    <div className="space-y-3">
-                      <div className="flex flex-wrap items-start gap-3">
-                        <CardTitle className="text-2xl sm:text-3xl font-semibold flex-1">
-                          {opportunity.title}
-                        </CardTitle>
-                        <Badge variant="secondary" className="text-xs h-fit">
-                          {opportunity.op_type.name}
-                        </Badge>
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-start gap-3">
+                      <CardTitle className="text-2xl sm:text-3xl font-semibold flex-1">
+                        {opportunity.title}
+                      </CardTitle>
+                      <Badge variant="secondary" className="text-xs h-fit">
+                        {opportunity.op_type.name}
+                      </Badge>
+                    </div>
+                    {opportunity.organization && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Building2 className="h-4 w-4" />
+                        <span>{opportunity.organization}</span>
                       </div>
-                      {opportunity.organization && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Building2 className="h-4 w-4" />
-                          <span>{opportunity.organization}</span>
-                        </div>
-                      )}
-                      <CardDescription className="text-sm">
-                        {opportunity.domain.name}
-                        {opportunity.specialization.name !== opportunity.domain.name &&
-                          ` • ${opportunity.specialization.name}`}
-                      </CardDescription>
-                    </div>
-                    <div className="flex flex-col gap-2 w-full md:w-56">
-                      {opportunity.op_type.name === "JOB" && (
-                        <Button
-                          variant="default"
-                          className="gap-2 w-full"
-                          onClick={() => redirectToAuthFor("cover_letter")}
-                        >
-                          <Lock className="h-4 w-4" />
-                          <FileText className="h-4 w-4" />
-                          Generate Cover Letter
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        className="gap-2 w-full"
-                        onClick={() => redirectToAuthFor("skill_gap")}
-                      >
-                        <Lock className="h-4 w-4" />
-                        <Target className="h-4 w-4" />
-                        Skill Gap Analysis
-                      </Button>
-                      {opportunity.source_url && (
-                        <Button
-                          variant="outline"
-                          className="gap-2 w-full"
-                          onClick={() => redirectToAuthFor("apply")}
-                        >
-                          <Lock className="h-4 w-4" />
-                          Apply
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+                    )}
+                    <CardDescription className="text-sm">
+                      {opportunity.domain.name}
+                      {opportunity.specialization.name !== opportunity.domain.name &&
+                        ` • ${opportunity.specialization.name}`}
+                    </CardDescription>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
@@ -301,6 +266,54 @@ export default function PublicOpportunityDetailPage() {
                       </Button>
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </FadeIn>
+
+            <FadeIn delay={0.05}>
+              <Card className="border-border/60">
+                <CardHeader>
+                  <CardTitle className="text-base">Actions</CardTitle>
+                  <CardDescription>
+                    Sign in to apply and unlock AI tools for this opportunity.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {opportunity.op_type.name === "JOB" && (
+                    <Button
+                      variant="default"
+                      className="gap-2 w-full"
+                      onClick={() => redirectToAuthFor("cover_letter")}
+                    >
+                      <Lock className="h-4 w-4" />
+                      <FileText className="h-4 w-4" />
+                      Generate Cover Letter
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    className="gap-2 w-full"
+                    onClick={() => redirectToAuthFor("skill_gap")}
+                  >
+                    <Lock className="h-4 w-4" />
+                    <Target className="h-4 w-4" />
+                    Skill Gap Analysis
+                  </Button>
+                  {opportunity.source_url && (
+                    <Button
+                      variant="outline"
+                      className="gap-2 w-full"
+                      onClick={() => redirectToAuthFor("apply")}
+                    >
+                      <Lock className="h-4 w-4" />
+                      Apply
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  )}
+
+                  <Button asChild variant="secondary" className="w-full">
+                    <Link href="/#login">Already have an account? Login</Link>
+                  </Button>
                 </CardContent>
               </Card>
             </FadeIn>

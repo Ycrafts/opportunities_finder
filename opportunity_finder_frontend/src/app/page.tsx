@@ -30,20 +30,28 @@ export default function Home() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const { isAuthenticated, isLoading } = useAuth();
 
+  const scrollToAuthSection = (mode: "login" | "signup") => {
+    const authSection = document.getElementById("get-started");
+    if (!authSection) return;
+    const offset = 180;
+    const top = authSection.getBoundingClientRect().top + window.scrollY + offset;
+    window.scrollTo({ top, behavior: "smooth" });
+    window.dispatchEvent(new CustomEvent("auth-mode-change", { detail: mode }));
+  };
+
   useEffect(() => {
     // Only handle hash navigation if user is not authenticated
     if (!isAuthenticated && !isLoading) {
       const hash = window.location.hash;
       if (hash === "#get-started") {
         setAuthMode("signup");
-        // Smooth scroll to auth section
         setTimeout(() => {
-          document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
+          scrollToAuthSection("signup");
         }, 100);
       } else if (hash === "#login") {
         setAuthMode("login");
         setTimeout(() => {
-          document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
+          scrollToAuthSection("login");
         }, 100);
       }
     }
@@ -156,7 +164,7 @@ export default function Home() {
                     className="text-base bg-[#0f9b57] hover:bg-[#0d884d]"
                     onClick={() => {
                       setAuthMode("signup");
-                      document.getElementById("get-started")?.scrollIntoView({ behavior: "smooth" });
+                      scrollToAuthSection("signup");
                     }}
                   >
                     Get Started
@@ -168,9 +176,6 @@ export default function Home() {
                     asChild
                   >
                     <Link href="/opportunities">Browse Opportunities</Link>
-                  </Button>
-                  <Button size="lg" variant="outline" className="text-base bg-white/10 text-white hover:bg-white/20 border-white/20" asChild>
-                    <Link href="#learn-more">Learn More</Link>
                   </Button>
                 </>
               )}
@@ -358,7 +363,9 @@ export default function Home() {
                 </div>
               </div>
               <FadeIn delay={0.2}>
-                <AuthSection defaultMode={authMode} />
+                <div className="mt-6">
+                  <AuthSection defaultMode={authMode} />
+                </div>
               </FadeIn>
             </div>
           </section>

@@ -5,6 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { config } from "@/lib/config";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { LogOut } from "lucide-react";
 import {
@@ -18,6 +19,8 @@ import {
 
 export function Header() {
   const { isAuthenticated, user, logout, isLoading } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const scrollToAuthSection = (mode: "login" | "signup") => {
     const authSection = document.getElementById("get-started");
@@ -27,6 +30,17 @@ export function Header() {
     window.scrollTo({ top, behavior: "smooth" });
     window.dispatchEvent(new CustomEvent("auth-mode-change", { detail: mode }));
   };
+
+  const handleAuthNavigation = (mode: "login" | "signup") => {
+    if (pathname === "/") {
+      scrollToAuthSection(mode);
+      return;
+    }
+
+    router.push(mode === "login" ? "/#login" : "/#get-started");
+  };
+
+  const isOpportunitiesRoute = pathname === "/opportunities" || pathname.startsWith("/opportunities/");
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 w-full bg-transparent border-0 backdrop-blur-0 supports-[backdrop-filter]:bg-transparent">
@@ -67,25 +81,27 @@ export function Header() {
                 </DropdownMenu>
               ) : (
                 <>
-                  <Button
-                    variant="ghost"
-                    className="hidden sm:inline-flex"
-                    asChild
-                  >
-                    <Link href="/opportunities">Browse Opportunities</Link>
-                  </Button>
+                  {!isOpportunitiesRoute && (
+                    <Button
+                      variant="ghost"
+                      className="hidden sm:inline-flex"
+                      asChild
+                    >
+                      <Link href="/opportunities">Browse Opportunities</Link>
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     className="hidden sm:inline-flex"
                     onClick={() => {
-                      scrollToAuthSection("login");
+                      handleAuthNavigation("login");
                     }}
                   >
                     Login
                   </Button>
                   <Button
                     onClick={() => {
-                      scrollToAuthSection("signup");
+                      handleAuthNavigation("signup");
                     }}
                     className="bg-[#0f9b57] hover:bg-[#0d884d]"
                   >
