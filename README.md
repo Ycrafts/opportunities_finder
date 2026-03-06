@@ -71,6 +71,43 @@ Base URL (local): `http://localhost:8000`
 - **Skill gap**: `/api/skill-gap-analysis/*`
 - **Docs**: `/api/docs/` (Swagger UI)
 
+## Background Jobs (Celery vs Cron)
+
+This project supports running background work either:
+
+- **Via Celery workers + Celery Beat** (recommended if you have Redis and workers running), or
+- **Via external cron** (e.g., Supabase scheduled jobs) calling the backend cron endpoints.
+
+### Option A: Celery/Beat
+
+Configured in `opportunity_finder_backend/opportunity_finder/settings.py`:
+
+- `CELERY_ENABLED` (env `CELERY_ENABLED=true|false`) controls whether code paths enqueue tasks (`.delay()`) or run inline.
+- Beat toggles/intervals (env):
+  - `PROCESSING_BEAT_ENABLED`, `PROCESSING_BEAT_INTERVAL_SECONDS`, `PROCESSING_PENDING_LIMIT`
+  - `MATCHING_BEAT_ENABLED`, `MATCHING_BEAT_INTERVAL_SECONDS`, `MATCHING_BATCH_SIZE`
+  - `NOTIFICATIONS_BEAT_ENABLED`, `NOTIFICATIONS_BEAT_INTERVAL_SECONDS`, `NOTIFICATIONS_PROCESS_LIMIT`
+
+### Option B: External Cron (Supabase)
+
+The backend exposes secured cron endpoints under `/api/cron/*` (see `opportunity_finder_backend/opportunity_finder/cron_urls.py`).
+
+All cron endpoints require:
+
+- Header: `X-Cron-Secret: <CRON_SECRET>`
+- Env: `CRON_SECRET=<your secret>`
+
+Endpoints:
+
+- `POST /api/cron/ingest-due/?limit=20&source_type=rss|telegram`
+  - Ingest due sources using the ingestion runner.
+- `POST /api/cron/process-raw/?limit=10`
+  - Processes pending raw items (internally uses `processing.tasks.process_pending_raw`; when `CELERY_ENABLED=false` it runs inline).
+- `POST /api/cron/match/?hours_back=24&opportunity_limit=1&user_limit=1`
+  - Runs matching in a controlled manner (uses a DB advisory lock to avoid concurrent runs).
+- `POST /api/cron/notifications/?limit=50`
+  - Sends pending notifications (email/telegram/dashboard).
+
 ## Running Locally (quick)
 
 ### Backend (Django)
