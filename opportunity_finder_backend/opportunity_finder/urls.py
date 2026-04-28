@@ -19,7 +19,10 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from opportunity_finder.health import health_check
+
 urlpatterns = [
+    path("health/", health_check, name="health"),
     path("admin/", admin.site.urls),
     path("api/auth/", include("accounts.urls")),
     path("api/profile/", include("profiles.urls")),
