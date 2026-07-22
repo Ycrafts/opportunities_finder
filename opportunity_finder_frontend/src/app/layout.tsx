@@ -34,6 +34,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/findra_logo.png" type="image/png" />
+        <meta name="google-adsense-account" content="ca-pub-7766969248134318" />
         <Script
           async
           strategy="afterInteractive"
